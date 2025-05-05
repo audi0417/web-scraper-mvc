@@ -24,6 +24,52 @@
     </nav>
 
     <div class="container-fluid mt-4">
+        <!-- 過濾器面板 -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-funnel-fill"></i> 數據過濾</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="animal-type-filter" class="form-label">動物類型</label>
+                        <div class="btn-group w-100" role="group" id="animal-type-filter">
+                            <input type="radio" class="btn-check" name="animal-type" id="animal-all" value="all" checked>
+                            <label class="btn btn-outline-primary" for="animal-all">全部</label>
+                            
+                            <input type="radio" class="btn-check" name="animal-type" id="animal-dog" value="dog">
+                            <label class="btn btn-outline-primary" for="animal-dog">狗</label>
+                            
+                            <input type="radio" class="btn-check" name="animal-type" id="animal-cat" value="cat">
+                            <label class="btn btn-outline-primary" for="animal-cat">貓</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="year-filter" class="form-label">年份</label>
+                        <select class="form-select" id="year-filter">
+                            <option value="all" selected>全部年份</option>
+                            <!-- 年份選項將由JavaScript動態填充 -->
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="city-filter" class="form-label">縣市</label>
+                        <select class="form-select" id="city-filter">
+                            <option value="all" selected>全部縣市</option>
+                            <!-- 縣市選項將由JavaScript動態填充 -->
+                        </select>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button id="apply-filters" class="btn btn-primary px-4">
+                        <i class="bi bi-filter"></i> 套用過濾條件
+                    </button>
+                    <button id="reset-filters" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-arrow-counterclockwise"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-md-3">
                 <div class="card mb-4 shadow-sm">
@@ -64,9 +110,15 @@
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-graph-up"></i> 寵物登記數量年度趨勢</h5>
-                        <div class="btn-group btn-group-sm" role="group" id="chart-type-selector">
-                            <button type="button" class="btn btn-outline-primary active" data-type="line">線圖</button>
-                            <button type="button" class="btn btn-outline-primary" data-type="bar">柱狀圖</button>
+                        <div class="d-flex">
+                            <div class="btn-group btn-group-sm me-2" role="group" id="trend-data-type">
+                                <button type="button" class="btn btn-outline-primary active" data-type="registrations">登記數</button>
+                                <button type="button" class="btn btn-outline-primary" data-type="neutering">絕育率</button>
+                            </div>
+                            <div class="btn-group btn-group-sm" role="group" id="chart-type-selector">
+                                <button type="button" class="btn btn-outline-primary active" data-type="line">線圖</button>
+                                <button type="button" class="btn btn-outline-primary" data-type="bar">柱狀圖</button>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
@@ -76,8 +128,12 @@
             </div>
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-pie-chart-fill"></i> 各縣市登記數量分佈</h5>
+                        <select class="form-select form-select-sm" style="width: auto;" id="distribution-year-selector">
+                            <option value="all">全部年份</option>
+                            <!-- 年份選項將由JavaScript動態填充 -->
+                        </select>
                     </div>
                     <div class="card-body">
                         <canvas id="city-distribution-chart" height="300"></canvas>
@@ -89,8 +145,12 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="card mb-4 shadow-sm">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-scissors"></i> 各縣市絕育率比較</h5>
+                        <select class="form-select form-select-sm" style="width: auto;" id="neutering-year-selector">
+                            <option value="all">全部年份</option>
+                            <!-- 年份選項將由JavaScript動態填充 -->
+                        </select>
                     </div>
                     <div class="card-body">
                         <canvas id="neutering-rate-chart" height="300"></canvas>
@@ -102,7 +162,7 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-table"></i> 寵物登記詳細數據</h5>
                         <div class="input-group input-group-sm" style="width: 200px;">
-                            <input type="text" class="form-control" id="table-search" placeholder="搜尋縣市...">
+                            <input type="text" class="form-control" id="table-search" placeholder="搜尋縣市/年份...">
                             <button class="btn btn-outline-secondary" type="button" id="search-btn"><i class="bi bi-search"></i></button>
                         </div>
                     </div>
@@ -112,6 +172,7 @@
                                 <tr>
                                     <th>縣市</th>
                                     <th>年份</th>
+                                    <th>動物類型</th>
                                     <th>登記數(A)</th>
                                     <th>絕育數(E)</th>
                                     <th>絕育率(%)</th>
