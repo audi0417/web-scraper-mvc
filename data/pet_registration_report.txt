@@ -1,0 +1,263 @@
+爬蟲報告 - 2025-05-05 12:42:49
+來源: https://www.pet.gov.tw/Web/O302.aspx
+項目數量: 52
+--------------------------------------------------
+1. 2000年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2000
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+2. 2000年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2000
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+3. 2001年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2001
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+4. 2001年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2001
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+5. 2002年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2002
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+6. 2002年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2002
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+7. 2003年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2003
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+8. 2003年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2003
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+9. 2004年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2004
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+10. 2004年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2004
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+11. 2005年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2005
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+12. 2005年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2005
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+13. 2006年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2006
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+14. 2006年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2006
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+15. 2007年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2007
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+16. 2007年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2007
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+17. 2008年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2008
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+18. 2008年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2008
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+19. 2009年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2009
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+20. 2009年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2009
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+21. 2010年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2010
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+22. 2010年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2010
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+23. 2011年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2011
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+24. 2011年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2011
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+25. 2012年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2012
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+26. 2012年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2012
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+27. 2013年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2013
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+28. 2013年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2013
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+29. 2014年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2014
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+30. 2014年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2014
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+31. 2015年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2015
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+32. 2015年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2015
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+33. 2016年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2016
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+34. 2016年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2016
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+35. 2017年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2017
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+36. 2017年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2017
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+37. 2018年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2018
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+38. 2018年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2018
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+39. 2019年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2019
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+40. 2019年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2019
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+41. 2020年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2020
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+42. 2020年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2020
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+43. 2021年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2021
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+44. 2021年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2021
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+45. 2022年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2022
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+46. 2022年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2022
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+47. 2023年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2023
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+48. 2023年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2023
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+49. 2024年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2024
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+50. 2024年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2024
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+51. 2025年 {{ t.AreaName }} {{ t.AreaName }}狗寵物登記數據
+   日期: 2025
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
+
+52. 2025年 {{ t.AreaName }} {{ t.AreaName }}貓寵物登記數據
+   日期: 2025
+   描述: 登記數: {{ t.fld02 }}, 絕育率: {{ t.j }}%
+   連結: https://www.pet.gov.tw/Web/O302.aspx
