@@ -3,44 +3,63 @@
 
 import logging
 import os
+import datetime
+import argparse
 from app import logger
-from app.config import TARGET_SITES, OUTPUT_FILES
-from app.controllers.scraper import create_scraper
+from app.config import OUTPUT_FILES
+from app.controllers.pet_gov_tw_scraper import PetGovTwScraper
 from app.views.data_formatter import DataFormatter
 
 def main():
     """主函數：運行爬蟲並輸出結果"""
-    logger.info("開始執行爬蟲...")
+    # 解析命令行參數
+    parser = argparse.ArgumentParser(description='寵物登記資料爬蟲')
+    parser.add_argument('--start-year', type=int, default=2000,
+                        help='開始年份 (默認: 2000)')
+    parser.add_argument('--end-year', type=int,
+                        help='結束年份 (默認: 當前年份)')
+    parser.add_argument('--output-dir', type=str, default='data',
+                        help='輸出目錄 (默認: data)')
+    args = parser.parse_args()
     
-    # 從配置中獲取目標網站
-    site_config = TARGET_SITES.get('example_news')
-    if not site_config:
-        logger.error("找不到目標網站配置")
-        return
+    # 確保輸出目錄存在
+    os.makedirs(args.output_dir, exist_ok=True)
     
-    # 創建爬蟲控制器
-    scraper = create_scraper('example_news', site_config['url'])
+    # 設定輸出檔案路徑
+    json_path = os.path.join(args.output_dir, 'pet_registration_data.json')
+    js_path = os.path.join('public/js', 'pet_registration_data.js')
+    report_path = os.path.join(args.output_dir, 'pet_registration_report.txt')
+    
+    # 獲取當前年份（如果未指定結束年份）
+    current_year = datetime.datetime.now().year
+    end_year = args.end_year or current_year
+    
+    logger.info(f"開始執行寵物登記資料爬蟲...")
+    logger.info(f"爬取範圍: {args.start_year} 年 至 {end_year} 年")
+    
+    # 初始化寵物登記網站爬蟲
+    scraper = PetGovTwScraper()
     
     # 執行爬蟲
-    data = scraper.run()
+    data = scraper.run(args.start_year, end_year)
     
     # 輸出結果
     if data.items:
-        logger.info(f"成功爬取 {len(data.items)} 個項目")
+        logger.info(f"成功爬取 {len(data.items)} 條數據")
         
         # 保存為JSON
-        DataFormatter.format_as_json(data, OUTPUT_FILES['json'])
-        logger.info(f"數據已保存為JSON: {OUTPUT_FILES['json']}")
+        DataFormatter.format_as_json(data, json_path)
+        logger.info(f"數據已保存為JSON: {json_path}")
         
         # 保存為JS變量（用於GitHub Pages）
-        DataFormatter.format_as_js(data, OUTPUT_FILES['js'])
-        logger.info(f"數據已保存為JS變量: {OUTPUT_FILES['js']}")
+        DataFormatter.format_as_js(data, js_path, 'petRegistrationData')
+        logger.info(f"數據已保存為JS變量: {js_path}")
         
         # 生成報告
         report = DataFormatter.format_report(data)
-        with open(OUTPUT_FILES['report'], 'w', encoding='utf-8') as f:
+        with open(report_path, 'w', encoding='utf-8') as f:
             f.write(report)
-        logger.info(f"報告已生成: {OUTPUT_FILES['report']}")
+        logger.info(f"報告已生成: {report_path}")
     else:
         logger.warning("未爬取到任何數據")
         if data.error:
