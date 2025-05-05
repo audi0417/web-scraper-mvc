@@ -1,0 +1,20 @@
+name: 部署到GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # 允許手動觸發
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢出代碼
+        uses: actions/checkout@v3
+
+      - name: 部署到GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: public  # 包含靜態文件的文件夾
+          branch: gh-pages  # 要部署到的分支
+          clean: true  # 清理目標分支中的舊文件
