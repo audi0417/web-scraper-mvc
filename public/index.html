@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動化爬蟲數據展示</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="py-4">
+            <h1 class="text-center">自動化爬蟲數據展示</h1>
+            <p class="text-center text-muted">使用GitHub Actions和MVC架構實現</p>
+        </header>
+        
+        <div class="alert alert-info">
+            最後更新時間: <span id="last-updated">載入中...</span>
+        </div>
+        
+        <div id="data-container">
+            <div class="text-center py-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">載入中...</span>
+                </div>
+                <p class="mt-3">正在載入數據...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-3 mt-5">
+        <div class="container text-center">
+            <p>使用 <a href="https://github.com/features/actions" target="_blank">GitHub Actions</a> 自動更新 | 
+               <a href="https://github.com/audi0417/web-scraper-mvc" target="_blank">查看源代碼</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- 加載爬蟲數據 -->
+    <script src="js/data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // 檢查數據是否存在
+                if (typeof scrapedData === 'undefined') {
+                    throw new Error('數據未加載');
+                }
+                
+                // 更新最後更新時間
+                const lastUpdatedElement = document.getElementById('last-updated');
+                const lastUpdated = new Date(scrapedData.last_updated);
+                lastUpdatedElement.textContent = lastUpdated.toLocaleString('zh-TW');
+                
+                // 清空載入提示
+                const container = document.getElementById('data-container');
+                container.innerHTML = '';
+                
+                // 顯示數據
+                if (scrapedData.items && scrapedData.items.length > 0) {
+                    const dataList = document.createElement('div');
+                    dataList.className = 'row';
+                    
+                    scrapedData.items.forEach(item => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6 col-lg-4 mb-4';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card h-100';
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">${escapeHtml(item.title)}</h5>
+                                ${item.date ? `<h6 class="card-subtitle mb-2 text-muted">${escapeHtml(item.date)}</h6>` : ''}
+                                ${item.description ? `<p class="card-text">${escapeHtml(item.description)}</p>` : ''}
+                                <a href="${escapeHtml(item.link)}" class="card-link" target="_blank">查看詳情</a>
+                            </div>
+                        `;
+                        
+                        col.appendChild(card);
+                        dataList.appendChild(col);
+                    });
+                    
+                    container.appendChild(dataList);
+                    
+                    // 添加來源資訊
+                    if (scrapedData.source_url) {
+                        const sourceInfo = document.createElement('div');
+                        sourceInfo.className = 'mt-4 text-center';
+                        sourceInfo.innerHTML = `<p class="text-muted">數據來源: <a href="${escapeHtml(scrapedData.source_url)}" target="_blank">${escapeHtml(scrapedData.source_url)}</a></p>`;
+                        container.appendChild(sourceInfo);
+                    }
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-warning">
+                            未找到爬取的數據。${scrapedData.error ? `<br>錯誤: ${escapeHtml(scrapedData.error)}` : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                const container = document.getElementById('data-container');
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        載入數據時出錯: ${error.message}
+                    </div>
+                    <div class="alert alert-info">
+                        <p>可能的原因:</p>
+                        <ul>
+                            <li>爬蟲尚未執行</li>
+                            <li>數據文件不存在</li>
+                            <li>數據文件格式不正確</li>
+                        </ul>
+                        <p>請確保GitHub Actions已正確執行爬蟲任務。</p>
+                    </div>
+                `;
+            }
+        });
+        
+        // HTML轉義函數，防止XSS攻擊
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
