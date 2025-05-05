@@ -1,0 +1,57 @@
+/* 自定義樣式 */
+body {
+    font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    background-color: #f8f9fa;
+    padding-bottom: 60px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header {
+    margin-bottom: 2rem;
+}
+
+.card {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-title {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+footer {
+    position: relative;
+    width: 100%;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.alert-info {
+    background-color: #e3f2fd;
+    border-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.last-updated {
+    font-style: italic;
+    margin-bottom: 1.5rem;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+}
