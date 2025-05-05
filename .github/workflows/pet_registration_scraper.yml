@@ -1,0 +1,44 @@
+name: 寵物登記數據爬蟲
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # 每週一午夜執行
+  workflow_dispatch:     # 允許手動觸發
+
+jobs:
+  scrape-pet-registration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢出代碼
+        uses: actions/checkout@v3
+        
+      - name: 設定Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 安裝依賴
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 執行寵物登記爬蟲
+        run: python main.py --start-year 2000
+        
+      - name: 配置Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          
+      - name: 提交爬取的數據
+        run: |
+          git add data/ public/js/pet_registration_data.js
+          git commit -m "自動更新寵物登記數據 $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git push
+
+      - name: 部署到GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: public
+          branch: gh-pages
+          clean: true
