@@ -1,139 +1,139 @@
 <!DOCTYPE html>
-<html lang=\"zh-TW\">
+<html lang="zh-TW">
 <head>
-    <meta charset=\"UTF-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣寵物登記統計儀表板</title>
-    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">
-    <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css\">
-    <link href=\"css/dashboard.css\" rel=\"stylesheet\">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="css/dashboard.css" rel="stylesheet">
     <!-- 引入 Chart.js -->
-    <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <nav class=\"navbar navbar-dark bg-primary\">
-        <div class=\"container-fluid\">
-            <a class=\"navbar-brand\" href=\"#\">
-                <i class=\"bi bi-bookmark-heart-fill me-2\"></i>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bookmark-heart-fill me-2"></i>
                 台灣寵物登記統計儀表板
             </a>
-            <span class=\"navbar-text\">
-                資料來源: <a href=\"https://www.pet.gov.tw/Web/O302.aspx\" target=\"_blank\" class=\"text-white\">寵物登記管理資訊網</a>
+            <span class="navbar-text">
+                資料來源: <a href="https://www.pet.gov.tw/Web/O302.aspx" target="_blank" class="text-white">寵物登記管理資訊網</a>
             </span>
         </div>
     </nav>
 
-    <div class=\"container-fluid mt-4\">
+    <div class="container-fluid mt-4">
         <!-- 過濾器面板 -->
-        <div class=\"card mb-4 shadow-sm\">
-            <div class=\"card-header\">
-                <h5 class=\"mb-0\"><i class=\"bi bi-funnel-fill\"></i> 數據過濾</h5>
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-funnel-fill"></i> 數據過濾</h5>
             </div>
-            <div class=\"card-body\">
-                <div class=\"row\">
-                    <div class=\"col-md-4 mb-3\">
-                        <label for=\"animal-type-filter\" class=\"form-label\">動物類型</label>
-                        <div class=\"btn-group w-100\" role=\"group\" id=\"animal-type-filter\">
-                            <input type=\"radio\" class=\"btn-check\" name=\"animal-type\" id=\"animal-all\" value=\"all\" checked>
-                            <label class=\"btn btn-outline-primary\" for=\"animal-all\">全部</label>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="animal-type-filter" class="form-label">動物類型</label>
+                        <div class="btn-group w-100" role="group" id="animal-type-filter">
+                            <input type="radio" class="btn-check" name="animal-type" id="animal-all" value="all" checked>
+                            <label class="btn btn-outline-primary" for="animal-all">全部</label>
                             
-                            <input type=\"radio\" class=\"btn-check\" name=\"animal-type\" id=\"animal-dog\" value=\"dog\">
-                            <label class=\"btn btn-outline-primary\" for=\"animal-dog\">狗</label>
+                            <input type="radio" class="btn-check" name="animal-type" id="animal-dog" value="dog">
+                            <label class="btn btn-outline-primary" for="animal-dog">狗</label>
                             
-                            <input type=\"radio\" class=\"btn-check\" name=\"animal-type\" id=\"animal-cat\" value=\"cat\">
-                            <label class=\"btn btn-outline-primary\" for=\"animal-cat\">貓</label>
+                            <input type="radio" class="btn-check" name="animal-type" id="animal-cat" value="cat">
+                            <label class="btn btn-outline-primary" for="animal-cat">貓</label>
                         </div>
                     </div>
-                    <div class=\"col-md-4 mb-3\">
-                        <label for=\"year-filter\" class=\"form-label\">年份</label>
-                        <select class=\"form-select\" id=\"year-filter\">
-                            <option value=\"all\" selected>全部年份</option>
+                    <div class="col-md-4 mb-3">
+                        <label for="year-filter" class="form-label">年份</label>
+                        <select class="form-select" id="year-filter">
+                            <option value="all" selected>全部年份</option>
                             <!-- 年份選項將由JavaScript動態填充 -->
                         </select>
                     </div>
-                    <div class=\"col-md-4 mb-3\">
-                        <label for=\"city-filter\" class=\"form-label\">縣市</label>
-                        <select class=\"form-select\" id=\"city-filter\">
-                            <option value=\"all\" selected>全部縣市</option>
+                    <div class="col-md-4 mb-3">
+                        <label for="city-filter" class="form-label">縣市</label>
+                        <select class="form-select" id="city-filter">
+                            <option value="all" selected>全部縣市</option>
                             <!-- 縣市選項將由JavaScript動態填充 -->
                         </select>
                     </div>
                 </div>
-                <div class=\"text-center\">
-                    <button id=\"apply-filters\" class=\"btn btn-primary px-4\">
-                        <i class=\"bi bi-filter\"></i> 套用過濾條件
+                <div class="text-center">
+                    <button id="apply-filters" class="btn btn-primary px-4">
+                        <i class="bi bi-filter"></i> 套用過濾條件
                     </button>
-                    <button id=\"reset-filters\" class=\"btn btn-outline-secondary ms-2\">
-                        <i class=\"bi bi-arrow-counterclockwise\"></i> 重置
+                    <button id="reset-filters" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-arrow-counterclockwise"></i> 重置
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class=\"row\">
-            <div class=\"col-md-3\">
-                <div class=\"card mb-4 shadow-sm\">
-                    <div class=\"card-body text-center\">
-                        <h5 class=\"card-title\"><i class=\"bi bi-clipboard-data\"></i> 總登記數量</h5>
-                        <h2 id=\"total-registrations\" class=\"display-4 mt-3 mb-0\">--</h2>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-clipboard-data"></i> 總登記數量</h5>
+                        <h2 id="total-registrations" class="display-4 mt-3 mb-0">--</h2>
                     </div>
                 </div>
             </div>
-            <div class=\"col-md-3\">
-                <div class=\"card mb-4 shadow-sm\">
-                    <div class=\"card-body text-center\">
-                        <h5 class=\"card-title\"><i class=\"bi bi-scissors\"></i> 平均絕育率</h5>
-                        <h2 id=\"avg-neutering-rate\" class=\"display-4 mt-3 mb-0\">--%</h2>
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-scissors"></i> 平均絕育率</h5>
+                        <h2 id="avg-neutering-rate" class="display-4 mt-3 mb-0">--%</h2>
                     </div>
                 </div>
             </div>
-            <div class=\"col-md-3\">
-                <div class=\"card mb-4 shadow-sm\">
-                    <div class=\"card-body text-center\">
-                        <h5 class=\"card-title\"><i class=\"bi bi-building\"></i> 登記單位數</h5>
-                        <h2 id=\"registration-units\" class=\"display-4 mt-3 mb-0\">--</h2>
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-building"></i> 登記單位數</h5>
+                        <h2 id="registration-units" class="display-4 mt-3 mb-0">--</h2>
                     </div>
                 </div>
             </div>
-            <div class=\"col-md-3\">
-                <div class=\"card mb-4 shadow-sm\">
-                    <div class=\"card-body text-center\">
-                        <h5 class=\"card-title\"><i class=\"bi bi-calendar-event\"></i> 最後更新</h5>
-                        <h2 id=\"last-updated\" class=\"display-6 mt-3 mb-0\">--</h2>
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-calendar-event"></i> 最後更新</h5>
+                        <h2 id="last-updated" class="display-6 mt-3 mb-0">--</h2>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class=\"row\">
-            <div class=\"col-md-8\">
-                <div class=\"card mb-4 shadow-sm\">
-                    <div class=\"card-header d-flex justify-content-between align-items-center\">
-                        <h5 class=\"mb-0\"><i class=\"bi bi-graph-up\"></i> 寵物登記數量年度趨勢</h5>
-                        <div class=\"d-flex\">
-                            <div class=\"btn-group btn-group-sm me-2\" role=\"group\" id=\"trend-data-type\">
-                                <button type=\"button\" class=\"btn btn-outline-primary active\" data-type=\"registrations\">登記數</button>
-                                <button type=\"button\" class=\"btn btn-outline-primary\" data-type=\"neutering\">絕育率</button>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-graph-up"></i> 寵物登記數量年度趨勢</h5>
+                        <div class="d-flex">
+                            <div class="btn-group btn-group-sm me-2" role="group" id="trend-data-type">
+                                <button type="button" class="btn btn-outline-primary active" data-type="registrations">登記數</button>
+                                <button type="button" class="btn btn-outline-primary" data-type="neutering">絕育率</button>
                             </div>
-                            <div class=\"btn-group btn-group-sm\" role=\"group\" id=\"chart-type-selector\">
-                                <button type=\"button\" class=\"btn btn-outline-primary active\" data-type=\"line\">線圖</button>
-                                <button type=\"button\" class=\"btn btn-outline-primary\" data-type=\"bar\">柱狀圖</button>
+                            <div class="btn-group btn-group-sm" role="group" id="chart-type-selector">
+                                <button type="button" class="btn btn-outline-primary active" data-type="line">線圖</button>
+                                <button type="button" class="btn btn-outline-primary" data-type="bar">柱狀圖</button>
                             </div>
                         </div>
                     </div>
-                    <div class=\"card-body\">
-                        <canvas id=\"registration-trend-chart\" height=\"300\"></canvas>
+                    <div class="card-body">
+                        <canvas id="registration-trend-chart" height="300"></canvas>
                     </div>
                 </div>
             </div>
-            <div class=\"col-md-4\">
-                <div class=\"card mb-4 shadow-sm\">
-                    <div class=\"card-header d-flex justify-content-between align-items-center\">
-                        <h5 class=\"mb-0\"><i class=\"bi bi-pie-chart-fill\"></i> 各縣市登記數量分佈</h5>
-                        <select class=\"form-select form-select-sm\" style=\"width: auto;\" id=\"distribution-year-selector\">
-                            <option value=\"all\">全部年份</option>
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart-fill"></i> 各縣市登記數量分佈</h5>
+                        <select class="form-select form-select-sm" style="width: auto;" id="distribution-year-selector">
+                            <option value="all">全部年份</option>
                             <!-- 年份選項將由JavaScript動態填充 -->
-                            </select>
+                        </select>
                     </div>
                     <div class="card-body">
                         <canvas id="city-distribution-chart" height="300"></canvas>
