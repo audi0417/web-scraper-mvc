@@ -8,7 +8,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Literal
 
 from app.models.data_model import ScrapedData, ScrapedItem
 from app.utils.helpers import random_delay, clean_text
@@ -16,6 +16,12 @@ from app.utils.helpers import random_delay, clean_text
 # 設定日誌
 logger = logging.getLogger('pet_gov_tw_scraper')
 
+# 動物類型常數
+ANIMAL_TYPE = {
+    "DOG": "0",
+    "CAT": "1",
+    "ALL": "2"  # 合計，將分別爬取狗和貓，然後合併數據
+}
 
 class PetGovTwScraper:
     """寵物登記管理資訊網爬蟲"""
@@ -73,12 +79,13 @@ class PetGovTwScraper:
             logger.error(f"獲取初始狀態時出錯: {e}")
             raise
             
-    def fetch_data_by_date_range(self, start_date: str, end_date: str) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
-        """根據日期範圍獲取數據
+    def fetch_data_by_date_range(self, start_date: str, end_date: str, animal_type: str = ANIMAL_TYPE["DOG"]) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
+        """根據日期範圍和動物類型獲取數據
         
         Args:
             start_date: 開始日期，格式 'yyyy/MM/dd'
             end_date: 結束日期，格式 'yyyy/MM/dd'
+            animal_type: 動物類型，'0'表示狗，'1'表示貓
             
         Returns:
             Tuple[List[Dict[str, Any]], Dict[str, str]]: 包含數據列表和下一次請求的表單數據的元組
@@ -90,6 +97,7 @@ class PetGovTwScraper:
             # 設置查詢參數
             form_data['ctl00$ContentPlaceHolder1$txtSDATE'] = start_date
             form_data['ctl00$ContentPlaceHolder1$txtEDATE'] = end_date
+            form_data['ctl00$ContentPlaceHolder1$ddlANIMAL'] = animal_type  # 設置動物類型
             form_data['ctl00$ContentPlaceHolder1$btnQuery'] = '查詢'
             
             # 提交查詢
@@ -131,15 +139,16 @@ class PetGovTwScraper:
             return data_list, new_form_data
             
         except Exception as e:
-            logger.error(f"獲取數據時出錯 ({start_date} - {end_date}): {e}")
+            logger.error(f"獲取數據時出錯 ({start_date} - {end_date}, 動物類型: {animal_type}): {e}")
             return [], {}
             
-    def scrape_yearly_data(self, start_year: int, end_year: int = None) -> List[Dict[str, Any]]:
-        """爬取指定年份範圍的數據
+    def scrape_yearly_data(self, start_year: int, end_year: int = None, animal_types: List[str] = [ANIMAL_TYPE["DOG"], ANIMAL_TYPE["CAT"]]) -> List[Dict[str, Any]]:
+        """爬取指定年份範圍和動物類型的數據
         
         Args:
             start_year: 開始年份
             end_year: 結束年份，默認為當前年份
+            animal_types: 動物類型列表，默認為[狗, 貓]
             
         Returns:
             List[Dict[str, Any]]: 包含所有年份數據的列表
@@ -150,33 +159,38 @@ class PetGovTwScraper:
             
         all_data = []
         
+        # 遍歷所有年份和動物類型
         for year in range(start_year, end_year + 1):
-            logger.info(f"爬取 {year} 年的數據...")
-            
-            # 設置日期範圍
-            start_date = f"{year}/01/01"
-            end_date = f"{year}/12/31"
-            
-            # 獲取數據
-            year_data, _ = self.fetch_data_by_date_range(start_date, end_date)
-            
-            if year_data:
-                # 添加年份信息
-                for item in year_data:
-                    item['年份'] = str(year)
-                all_data.extend(year_data)
-                logger.info(f"成功獲取 {year} 年數據，共 {len(year_data)} 條記錄")
-            else:
-                logger.warning(f"未獲取到 {year} 年的數據")
+            for animal_type in animal_types:
+                animal_name = "狗" if animal_type == ANIMAL_TYPE["DOG"] else "貓"
+                logger.info(f"爬取 {year} 年的{animal_name}數據...")
                 
-            # 添加延遲，避免頻繁請求
-            random_delay(2.0, 5.0)
-            
+                # 設置日期範圍
+                start_date = f"{year}/01/01"
+                end_date = f"{year}/12/31"
+                
+                # 獲取數據
+                year_data, _ = self.fetch_data_by_date_range(start_date, end_date, animal_type)
+                
+                if year_data:
+                    # 添加年份和動物類型信息
+                    for item in year_data:
+                        item['年份'] = str(year)
+                        item['動物類型'] = animal_name
+                    all_data.extend(year_data)
+                    logger.info(f"成功獲取 {year} 年{animal_name}數據，共 {len(year_data)} 條記錄")
+                else:
+                    logger.warning(f"未獲取到 {year} 年的{animal_name}數據")
+                    
+                # 添加延遲，避免頻繁請求
+                random_delay(2.0, 5.0)
+                
         # 將收集到的數據轉換為模型對象
         for item_data in all_data:
             # 將原始數據存儲到 extra_data
+            animal_type = item_data.get('動物類型', '未知')
             item = ScrapedItem(
-                title=f"{item_data.get('年份', '')}年 {item_data.get('縣市', '全國')}寵物登記數據",
+                title=f"{item_data.get('年份', '')}年 {item_data.get('縣市', '全國')}{animal_type}寵物登記數據",
                 link=self.BASE_URL,
                 description=f"登記數: {item_data.get('登記數(A)', '0')}, 絕育率: {item_data.get('絕育率(E-F)/(A-B)', '0')}%",
                 date=item_data.get('年份', ''),
@@ -186,19 +200,21 @@ class PetGovTwScraper:
             
         return all_data
         
-    def run(self, start_year: int = 2000, end_year: int = None) -> ScrapedData:
+    def run(self, start_year: int = 2000, end_year: int = None, animal_types: List[str] = [ANIMAL_TYPE["DOG"], ANIMAL_TYPE["CAT"]]) -> ScrapedData:
         """執行爬蟲
         
         Args:
             start_year: 開始年份，默認為2000年
             end_year: 結束年份，默認為當前年份
+            animal_types: 動物類型列表，默認為[狗, 貓]
             
         Returns:
             爬取的數據
         """
         try:
-            logger.info(f"開始爬取寵物登記數據 (從 {start_year} 到 {end_year or '現在'})")
-            self.scrape_yearly_data(start_year, end_year)
+            animal_types_str = "、".join(["狗" if t == ANIMAL_TYPE["DOG"] else "貓" for t in animal_types])
+            logger.info(f"開始爬取{animal_types_str}寵物登記數據 (從 {start_year} 到 {end_year or '現在'})")
+            self.scrape_yearly_data(start_year, end_year, animal_types)
             logger.info(f"爬取完成，共獲取 {len(self.data.items)} 條數據")
             return self.data
         except Exception as e:
