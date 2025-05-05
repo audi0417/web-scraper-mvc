@@ -1,6 +1,3 @@
-// 全局圖表對象
-const charts = {};
-
 /**
 * 初始化所有圖表
 * @param {Object} data - 處理後的數據
@@ -22,6 +19,11 @@ function initCharts(data) {
 */
 function initRegistrationTrendChart(data) {
   const ctx = document.getElementById('registration-trend-chart').getContext('2d');
+  
+  // 先銷毀已存在的圖表
+  if (charts.registrationTrend) {
+    charts.registrationTrend.destroy();
+  }
   
   // 準備數據
   const years = data.years;
@@ -166,6 +168,11 @@ function initRegistrationTrendChart(data) {
 function initCityDistributionChart(data) {
   const ctx = document.getElementById('city-distribution-chart').getContext('2d');
   
+  // 先銷毀已存在的圖表
+  if (charts.cityDistribution) {
+    charts.cityDistribution.destroy();
+  }
+  
   // 獲取前10大縣市（按登記數量）
   const citiesData = Object.entries(data.cityData)
       .map(([city, cityData]) => ({
@@ -255,6 +262,11 @@ function initCityDistributionChart(data) {
 */
 function initNeuteringRateChart(data) {
   const ctx = document.getElementById('neutering-rate-chart').getContext('2d');
+  
+  // 先銷毀已存在的圖表
+  if (charts.neuteringRate) {
+    charts.neuteringRate.destroy();
+  }
   
   // 獲取前15大縣市（按絕育率）
   const citiesData = Object.entries(data.cityData)
@@ -362,7 +374,7 @@ function updateCityDistributionByYear(year) {
   const cities = originalData.cities;
   
   // 獲取活動的動物類型過濾器
-  const animalType = document.querySelector('input[name=\"animal-type\"]:checked').value;
+  const animalType = document.querySelector('input[name=\\\"animal-type\\\"]:checked').value;
   
   // 根據動物類型和年份篩選數據
   let registrations;
@@ -431,7 +443,7 @@ function updateNeuteringRateByYear(year) {
   const options = charts.neuteringRate.options;
   
   // 獲取活動的動物類型過濾器
-  const animalType = document.querySelector('input[name=\"animal-type\"]:checked').value;
+  const animalType = document.querySelector('input[name=\\\"animal-type\\\"]:checked').value;
   
   // 根據動物類型獲取絕育率數據
   let neuteringRates;
@@ -510,7 +522,7 @@ function updateTrendChartDataType(dataType) {
   const originalData = charts.registrationTrend.originalData;
   
   // 獲取活動的動物類型過濾器
-  const animalType = document.querySelector('input[name=\"animal-type\"]:checked').value;
+  const animalType = document.querySelector('input[name=\\\"animal-type\\\"]:checked').value;
   
   // 根據數據類型和動物類型準備新的數據集
   let datasets;
@@ -701,86 +713,4 @@ function updateTrendChartDataType(dataType) {
   
   // 更新圖表
   charts.registrationTrend.update();
-}
-
-/**
-* 根據過濾條件更新所有圖表
-* @param {Object} filters - 過濾條件
-*/
-function updateAllCharts(filters) {
-  // 首先根據過濾條件更新年度趨勢圖
-  if (charts.registrationTrend) {
-      updateTrendChartByFilters(filters);
-  }
-  
-  // 更新各縣市登記數量分佈圖
-  if (charts.cityDistribution) {
-      updateCityDistributionByYear(filters.year);
-  }
-  
-  // 更新各縣市絕育率比較圖
-  if (charts.neuteringRate) {
-      updateNeuteringRateByYear(filters.year);
-  }
-}
-
-/**
- * 根據過濾條件更新年度趨勢圖
- * @param {Object} filters - 過濾條件
- */
-function updateTrendChartByFilters(filters) {
-    // 獲取當前的數據類型（登記數量或絕育率）
-    const dataType = document.querySelector('#trend-data-type button.active').getAttribute('data-type');
-    
-    // 根據數據類型和過濾條件更新圖表
-    updateTrendChartDataType(dataType);
-    
-    // 如果指定了縣市過濾條件，則僅顯示該縣市的數據
-    if (filters.city !== 'all' && charts.registrationTrend) {
-        const city = filters.city;
-        const years = charts.registrationTrend.originalData.years;
-        
-        // 獲取該縣市的數據
-        const cityData = [];
-        years.forEach(year => {
-            const yearData = processedData.yearlyData[year];
-            if (yearData && yearData.cityData[city]) {
-                if (filters.animalType === 'dog') {
-                    cityData.push(yearData.cityData[city].dogRegistrations || 0);
-                } else if (filters.animalType === 'cat') {
-                    cityData.push(yearData.cityData[city].catRegistrations || 0);
-                } else {
-                    cityData.push(yearData.cityData[city].registrations || 0);
-                }
-            } else {
-                cityData.push(0);
-            }
-        });
-        
-        // 更新圖表數據
-        charts.registrationTrend.data.datasets = [{
-            label: `${city}${filters.animalType === 'dog' ? '狗' : filters.animalType === 'cat' ? '貓' : ''}登記數`,
-            data: cityData,
-            backgroundColor: 'rgba(44, 123, 229, 0.2)',
-            borderColor: 'rgba(44, 123, 229, 1)',
-            borderWidth: 2,
-            pointBackgroundColor: 'rgba(44, 123, 229, 1)',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(44, 123, 229, 1)',
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            tension: 0.3
-        }];
-        
-        // 更新圖表
-        charts.registrationTrend.update();
-    }
-}
-
-/**
- * 導出圖表對象
- */
-function getCharts() {
-    return charts;
 }
