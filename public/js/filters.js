@@ -174,3 +174,38 @@ function initYearSelectors() {
         updateNeuteringRateByYear(this.value);
     });
 }
+
+/**
+ * 填充過濾器選項
+ * @param {Object} data - 處理後的數據
+ */
+function populateFilterOptions(data) {
+    // 填充年份選擇器
+    const yearFilter = document.getElementById('year-filter');
+    const distributionYearSelector = document.getElementById('distribution-year-selector');
+    const neuteringYearSelector = document.getElementById('neutering-year-selector');
+    
+    // 清空選項並添加"全部年份"選項
+    yearFilter.innerHTML = '<option value="all" selected>全部年份</option>';
+    distributionYearSelector.innerHTML = '<option value="all" selected>全部年份</option>';
+    neuteringYearSelector.innerHTML = '<option value="all" selected>全部年份</option>';
+    
+    // 按降序排序年份
+    const sortedYears = [...data.years].sort((a, b) => b - a);
+    
+    // 添加年份選項
+    sortedYears.forEach(year => {
+        yearFilter.innerHTML += `<option value="${year}">${year}年</option>`;
+        distributionYearSelector.innerHTML += `<option value="${year}">${year}年</option>`;
+        neuteringYearSelector.innerHTML += `<option value="${year}">${year}年</option>`;
+    });
+    
+    // 填充縣市選擇器
+    const cityFilter = document.getElementById('city-filter');
+    cityFilter.innerHTML = '<option value="all" selected>全部縣市</option>';
+    
+    // 添加縣市選項
+    data.cities.forEach(city => {
+        cityFilter.innerHTML += `<option value="${city}">${city}</option>`;
+    });
+}
