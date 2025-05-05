@@ -1,0 +1,143 @@
+/* 寵物登記統計儀表板樣式 */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --accent-color: #e74c3c;
+    --text-color: #34495e;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --hover-transition: all 0.3s ease-in-out;
+}
+
+body {
+    font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    color: var(--text-color);
+    background-color: var(--light-bg);
+    padding-bottom: 60px;
+}
+
+/* 導航欄樣式 */
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* 卡片樣式 */
+.card {
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    transition: var(--hover-transition);
+    border: none;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+    padding: 15px 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* 數據卡片樣式 */
+#total-registrations {
+    color: var(--primary-color);
+}
+
+#avg-neutering-rate {
+    color: var(--secondary-color);
+}
+
+#registration-units {
+    color: #9b59b6;
+}
+
+#last-updated {
+    color: #e67e22;
+    font-size: 1.5rem;
+}
+
+/* 圖表卡片特定樣式 */
+#chart-type-selector .btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* 表格樣式 */
+.table {
+    color: var(--text-color);
+}
+
+.table thead th {
+    background-color: rgba(33, 150, 243, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+/* 分頁控件樣式 */
+.pagination .page-link {
+    color: var(--primary-color);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 20px;
+    }
+    
+    h2.display-4 {
+        font-size: 2.5rem;
+    }
+    
+    #last-updated {
+        font-size: 1.2rem;
+    }
+}
+
+/* 動畫效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+
+/* 自定義圖表顏色 */
+.chart-colors-primary {
+    color: var(--primary-color);
+}
+
+.chart-colors-secondary {
+    color: var(--secondary-color);
+}
+
+.chart-colors-accent {
+    color: var(--accent-color);
+}
