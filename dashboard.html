@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣寵物登記統計儀表板</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="css/dashboard.css" rel="stylesheet">
+    <!-- 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bookmark-heart-fill me-2"></i>
+                台灣寵物登記統計儀表板
+            </a>
+            <span class="navbar-text">
+                資料來源: <a href="https://www.pet.gov.tw/Web/O302.aspx" target="_blank" class="text-white">寵物登記管理資訊網</a>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-clipboard-data"></i> 總登記數量</h5>
+                        <h2 id="total-registrations" class="display-4 mt-3 mb-0">--</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-scissors"></i> 平均絕育率</h5>
+                        <h2 id="avg-neutering-rate" class="display-4 mt-3 mb-0">--%</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-building"></i> 登記單位數</h5>
+                        <h2 id="registration-units" class="display-4 mt-3 mb-0">--</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="bi bi-calendar-event"></i> 最後更新</h5>
+                        <h2 id="last-updated" class="display-6 mt-3 mb-0">--</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-graph-up"></i> 寵物登記數量年度趨勢</h5>
+                        <div class="btn-group btn-group-sm" role="group" id="chart-type-selector">
+                            <button type="button" class="btn btn-outline-primary active" data-type="line">線圖</button>
+                            <button type="button" class="btn btn-outline-primary" data-type="bar">柱狀圖</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="registration-trend-chart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart-fill"></i> 各縣市登記數量分佈</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="city-distribution-chart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-scissors"></i> 各縣市絕育率比較</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="neutering-rate-chart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-table"></i> 寵物登記詳細數據</h5>
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <input type="text" class="form-control" id="table-search" placeholder="搜尋縣市...">
+                            <button class="btn btn-outline-secondary" type="button" id="search-btn"><i class="bi bi-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-striped table-hover table-sm" id="data-table">
+                            <thead>
+                                <tr>
+                                    <th>縣市</th>
+                                    <th>年份</th>
+                                    <th>登記數(A)</th>
+                                    <th>絕育數(E)</th>
+                                    <th>絕育率(%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- 表格數據將由JavaScript填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <nav>
+                            <ul class="pagination pagination-sm justify-content-center mb-0" id="table-pagination">
+                                <!-- 分頁控件將由JavaScript填充 -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-3 mt-4">
+        <div class="container text-center">
+            <p>
+                © 2025 寵物登記統計儀表板 | 
+                資料來自 <a href="https://www.pet.gov.tw" target="_blank">寵物登記管理資訊網</a> | 
+                使用 <a href="https://github.com/features/actions" target="_blank">GitHub Actions</a> 自動更新
+            </p>
+        </div>
+    </footer>
+
+    <!-- 載入爬蟲數據的JS文件 -->
+    <script src="js/pet_registration_data.js"></script>
+    <!-- 儀表板JS -->
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
