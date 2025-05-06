@@ -840,4 +840,4 @@ function getCharts() {
     return charts;
 }
     
-}
+
