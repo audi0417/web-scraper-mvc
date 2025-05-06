@@ -159,12 +159,85 @@ class PetGovTwScraper:
             # 創建一個空的結果列表
             table_data = []
             
-            # 將單一對象轉成列表
-            if not isinstance(json_data, list):
-                json_data = [json_data]
+            # 檢查Message欄位（根據日誌顯示，數據位於此欄位）
+            if 'Message' in json_data and json_data.get('Success', False):
+                # 嘗試解析Message字段
+                message_content = json_data['Message']
+                
+                # 如果是字符串，嘗試解析JSON
+                if isinstance(message_content, str):
+                    try:
+                        message_data = json.loads(message_content)
+                        if isinstance(message_data, list):
+                            items = message_data
+                        else:
+                            items = [message_data]
+                    except json.JSONDecodeError:
+                        logger.error("無法解析Message欄位中的JSON數據")
+                        return []
+                elif isinstance(message_content, list):
+                    items = message_content
+                else:
+                    items = [message_content]
+                
+                # 處理每個項目
+                for item in items:
+                    row_data = {}
+                    
+                    # 縣市名稱
+                    if "AreaName" in item:
+                        row_data["縣市"] = item["AreaName"]
+                    elif "areaName" in item:
+                        row_data["縣市"] = item["areaName"]
+                    
+                    # 轉換常見的數值欄位
+                    field_mapping = {
+                        "fld01": "登記單位數",
+                        "fld02": "登記數(A)",
+                        "fld03": "除戶數(B)",
+                        "fld04": "絕育數(E)",
+                        "fld05": "轉讓數(C)",
+                        "fld06": "變更數(D)",
+                        "fld07": "免絕育數(G)",
+                        "fld08": "絕育除戶數(F)",
+                        "fld10": "免絕育除戶數(H)",
+                        "j": "絕育率(E-F)/(A-B)",
+                        "k": "繁殖管理率(E-F)+(G-H)/(A-B)"
+                    }
+                    
+                    # 將API欄位轉換為標準欄位名稱
+                    for api_field, standard_field in field_mapping.items():
+                        if api_field in item:
+                            row_data[standard_field] = str(item[api_field])
+                    
+                    # 計算絕育率（如果沒有提供）
+                    if "絕育率(E-F)/(A-B)" not in row_data and "登記數(A)" in row_data and "除戶數(B)" in row_data and "絕育數(E)" in row_data and "絕育除戶數(F)" in row_data:
+                        try:
+                            reg = int(row_data["登記數(A)"])
+                            rem = int(row_data["除戶數(B)"])
+                            neu = int(row_data["絕育數(E)"])
+                            neu_rem = int(row_data["絕育除戶數(F)"])
+                            
+                            if (reg - rem) > 0:
+                                rate = (neu - neu_rem) / (reg - rem) * 100
+                                row_data["絕育率(E-F)/(A-B)"] = f"{rate:.2f}"
+                        except (ValueError, ZeroDivisionError):
+                            pass
+                    
+                    if row_data:  # 確保行數據不為空
+                        table_data.append(row_data)
+                
+                return table_data
+            
+            # 如果沒有Message欄位，嘗試直接解析數據
+            items = []
+            if isinstance(json_data, list):
+                items = json_data
+            else:
+                items = [json_data]
             
             # 解析每個數據項
-            for item in json_data:
+            for item in items:
                 # 標準欄位映射
                 row_data = {}
                 
@@ -173,11 +246,8 @@ class PetGovTwScraper:
                     row_data["縣市"] = item["AreaName"]
                 elif "areaName" in item:
                     row_data["縣市"] = item["areaName"]
-                elif "AreaCode" in item and "AreaCodeName" in item:
-                    # 部分API回傳縣市代碼和名稱分開
-                    row_data["縣市代碼"] = item["AreaCode"]
-                    row_data["縣市"] = item["AreaCodeName"]
-                    
+                
+                # 其他欄位解析（保持與上面相同的邏輯）
                 field_mapping = {
                     "fld01": "登記單位數",
                     "fld02": "登記數(A)",
@@ -192,7 +262,6 @@ class PetGovTwScraper:
                     "k": "繁殖管理率(E-F)+(G-H)/(A-B)"
                 }
                 
-                # 將API欄位轉換為標準欄位名稱
                 for api_field, standard_field in field_mapping.items():
                     if api_field in item:
                         row_data[standard_field] = str(item[api_field])
@@ -201,7 +270,7 @@ class PetGovTwScraper:
                     table_data.append(row_data)
             
             return table_data
-            
+                
         except Exception as e:
             logger.error(f"解析API數據時出錯: {e}")
             return []
