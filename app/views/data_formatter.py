@@ -45,3 +45,36 @@ class DataFormatter:
             report.append(f"錯誤: {data.error}")
             
         return "\n".join(report)
+        
+    @staticmethod
+    def _process_data_for_js(data: ScrapedData) -> dict:
+        """處理資料以確保表格數據完整
+        
+        整理爬蟲獲取的數據，確保每個縣市每個年度的資料都被正確記錄
+        """
+        data_dict = data.to_dict()
+        
+        # 收集所有縣市、年份和動物類型
+        cities = set()
+        years = set()
+        animal_types = set()
+        
+        for item in data_dict['items']:
+            if '縣市' in item:
+                city = item.get('縣市')
+                if city and city != '合計':
+                    cities.add(city)
+            
+            if '年份' in item:
+                years.add(item.get('年份'))
+            
+            if '動物類型' in item:
+                animal_types.add(item.get('動物類型'))
+                
+        # 添加縣市、年份和動物類型到處理後的數據中
+        result = data_dict.copy()
+        result['cities'] = sorted(list(cities))
+        result['years'] = sorted(list(years), reverse=True)  # 年份降序排列
+        result['animalTypes'] = sorted(list(animal_types))
+        
+        return result
