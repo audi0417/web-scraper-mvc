@@ -20,8 +20,11 @@ class DataFormatter:
         """將爬取的數據保存為JavaScript變量聲明，適用於GitHub Pages"""
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
+        # 處理資料以確保表格數據完整
+        processed_data = DataFormatter._process_data_for_js(data)
+        
         with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(f"const {variable_name} = {json.dumps(data.to_dict(), ensure_ascii=False, indent=2)};\n")
+            f.write(f"const {variable_name} = {json.dumps(processed_data, ensure_ascii=False, indent=2)};\n")
             
     @staticmethod
     def format_report(data: ScrapedData) -> str:
