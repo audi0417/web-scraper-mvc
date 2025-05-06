@@ -52,7 +52,7 @@ function processData(rawData) {
     
     // 處理每個數據項
     items.forEach(item => {
-        // 獲取基本數據
+        // 獲取基本數據（直接從item獲取而非extra_data）
         const year = item.年份 || '';
         const city = item.縣市 || '';
         const animalType = item.動物類型 || '狗'; // 默認為狗
@@ -166,7 +166,7 @@ function processData(rawData) {
             } else if (animalType === '貓') {
                 result.cityData[city].catRegistrations += registrations;
             }
-            result.cityData[city].registrationUnits = Math.max(result.cityData[city].registrationUnits, registrationUnits);
+            result.cityData[city].registrationUnits = Math.max(result.cityData[city].registrationUnits || 0, registrationUnits);
             
             if (!result.cityData[city].yearlyData[year]) {
                 result.cityData[city].yearlyData[year] = {
