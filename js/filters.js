@@ -105,16 +105,17 @@ function applyFilters() {
     };
     
     // 過濾數據
-    filteredData = filterData(processedData, activeFilters);
+    // 使用全局變量processedData
+    window.filteredData = filterData(window.processedData, activeFilters);
     
     // 更新數據卡片
-    updateDataCards(filteredData);
+    updateDataCards(window.filteredData);
     
     // 更新圖表
     updateAllCharts(activeFilters);
     
     // 更新表格
-    updateTable(filteredData);
+    updateTable(window.filteredData);
     
     // 隱藏載入中
     setTimeout(() => {
@@ -163,7 +164,8 @@ function initChartTypeSelector() {
             const chartType = this.getAttribute('data-type');
             
             // 更新圖表
-            if (charts.registrationTrend) {
+            const charts = getCharts();
+            if (charts && charts.registrationTrend) {
                 charts.registrationTrend.config.type = chartType;
                 charts.registrationTrend.update();
             }
