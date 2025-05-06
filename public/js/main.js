@@ -34,7 +34,7 @@ function initDashboard() {
         // 更新數據卡片
         updateDataCards(processedData);
         
-        // 初始化圖表
+        // 初始化圖表 - 使用 chart-initializer.js 中的函數
         initCharts(processedData);
         
         // 填充數據表格
@@ -46,8 +46,8 @@ function initDashboard() {
         // 初始化表格搜索功能
         initTableSearch();
         
-        // 初始化圖表類型選擇器
-        initChartTypeSelector();
+        // 初始化圖表類型選擇器 - 已在 dashboard.js 中處理
+        // initChartTypeSelector();
         
         // 初始化趨勢圖數據類型選擇器
         initTrendDataTypeSelector();
