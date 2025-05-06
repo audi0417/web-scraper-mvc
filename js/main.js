@@ -28,6 +28,10 @@ function initDashboard() {
         processedData = processData(petRegistrationData);
         filteredData = processedData;
         
+        // 將處理後的數據設為全局變量，便於其他模塊使用
+        window.processedData = processedData;
+        window.filteredData = filteredData;
+        
         // 填充過濾器選項
         populateFilterOptions(processedData);
         
@@ -46,9 +50,6 @@ function initDashboard() {
         // 初始化表格搜索功能
         initTableSearch();
         
-        // 初始化圖表類型選擇器 - 已在 dashboard.js 中處理
-        // initChartTypeSelector();
-        
         // 初始化趨勢圖數據類型選擇器
         initTrendDataTypeSelector();
         
@@ -59,5 +60,26 @@ function initDashboard() {
     } catch (error) {
         console.error('初始化儀表板時出錯:', error);
         showError('初始化錯誤', '初始化儀表板時出錯: ' + error.message);
+    }
+}
+
+/**
+ * 更新表格數據
+ * @param {Object} data - 過濾後的數據
+ */
+function updateTable(data) {
+    // 如果表格數據存在，更新它
+    if (window.tableDataForSearch) {
+        // 更新表格數據
+        window.tableDataForSearch.data = [...data.tableData].sort((a, b) => {
+            if (a.year !== b.year) return b.year - a.year;
+            return a.city.localeCompare(b.city, 'zh-TW');
+        });
+        
+        // 重新渲染表格
+        window.tableDataForSearch.render(1);
+    } else {
+        // 否則重新填充表格
+        populateTable(data);
     }
 }
