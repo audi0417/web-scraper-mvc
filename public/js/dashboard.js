@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initDashboard() {
     try {
-        // 處理原始數據
-        const processedData = processData(petRegistrationData);
+        // 處理原始數據 - 使用data-processor.js中的函數
+        const processedData = window.processData ? window.processData(petRegistrationData) : processData(petRegistrationData);
         
         // 更新數據卡片
         updateDataCards(processedData);
@@ -45,181 +45,7 @@ function initDashboard() {
     }
 }
 
-/**
- * 處理原始數據
- * @param {Object} rawData - 爬蟲抓取的原始數據
- * @returns {Object} 處理後的數據
- */
-function processData(rawData) {
-    // 獲取所有項目
-    const items = rawData.items || [];
-    
-    // 初始化處理結果
-    const result = {
-        totalRegistrations: 0,
-        avgNeuteringRate: 0,
-        registrationUnits: 0,
-        lastUpdated: rawData.last_updated || new Date().toISOString(),
-        
-        // 按年份分組的數據
-        yearlyData: {},
-        
-        // 按縣市分組的數據
-        cityData: {},
-        
-        // 扁平化的表格數據
-        tableData: []
-    };
-    
-    // 收集所有的年份和縣市
-    const years = new Set();
-    const cities = new Set();
-    
-    // 處理每個數據項
-    items.forEach(item => {
-        const data = item.extra_data || {};
-        
-        // 獲取基本數據
-        const year = data.年份 || '';
-        const city = data.縣市 || '';
-        const animalType = data.動物類型 || '狗'; // 預設為狗
-        const registrations = parseInt(data['登記數(A)'] || 0, 10);
-        const neuteringCount = parseInt(data['絕育數(E)'] || 0, 10);
-        const neuteringRate = parseFloat(data['絕育率(E-F)/(A-B)'] || 0);
-        const registrationUnits = parseInt(data['登記單位數'] || 0, 10);
-        
-        // 添加到年份和縣市集合
-        if (year) years.add(year);
-        if (city) cities.add(city);
-        
-        // 更新總數據
-        result.totalRegistrations += registrations;
-        
-        // 初始化年份數據（如果不存在）
-        if (year && !result.yearlyData[year]) {
-            result.yearlyData[year] = {
-                totalRegistrations: 0,
-                dogRegistrations: 0,  // 新增狗登記數
-                catRegistrations: 0,  // 新增貓登記數
-                avgNeuteringRate: 0,
-                dogNeuteringRate: 0,  // 新增狗絕育率
-                catNeuteringRate: 0,  // 新增貓絕育率
-                citiesCount: 0,
-                cityData: {}
-            };
-        }
-        
-        // 初始化縣市數據（如果不存在）
-        if (city && !result.cityData[city]) {
-            result.cityData[city] = {
-                totalRegistrations: 0,
-                dogRegistrations: 0,  // 新增狗登記數
-                catRegistrations: 0,  // 新增貓登記數
-                avgNeuteringRate: 0,
-                dogNeuteringRate: 0,  // 新增狗絕育率
-                catNeuteringRate: 0,  // 新增貓絕育率
-                registrationUnits: 0,
-                yearlyData: {}
-            };
-        }
-        
-        // 初始化年份-縣市數據
-        if (year && city) {
-            // 更新年份數據
-            result.yearlyData[year].totalRegistrations += registrations;
-            
-            // 根據動物類型更新數據
-            if (animalType === '狗') {
-                result.yearlyData[year].dogRegistrations += registrations;
-                result.cityData[city].dogRegistrations += registrations;
-            } else if (animalType === '貓') {
-                result.yearlyData[year].catRegistrations += registrations;
-                result.cityData[city].catRegistrations += registrations;
-            }
-            
-            result.yearlyData[year].citiesCount += 1;
-            
-            if (!result.yearlyData[year].cityData[city]) {
-                result.yearlyData[year].cityData[city] = {
-                    registrations: registrations,
-                    dogRegistrations: animalType === '狗' ? registrations : 0,
-                    catRegistrations: animalType === '貓' ? registrations : 0,
-                    neuteringRate: neuteringRate,
-                    dogNeuteringRate: animalType === '狗' ? neuteringRate : 0,
-                    catNeuteringRate: animalType === '貓' ? neuteringRate : 0,
-                    registrationUnits: registrationUnits
-                };
-            } else {
-                // 更新現有數據
-                result.yearlyData[year].cityData[city].registrations += registrations;
-                
-                if (animalType === '狗') {
-                    result.yearlyData[year].cityData[city].dogRegistrations += registrations;
-                    result.yearlyData[year].cityData[city].dogNeuteringRate = neuteringRate;
-                } else if (animalType === '貓') {
-                    result.yearlyData[year].cityData[city].catRegistrations += registrations;
-                    result.yearlyData[year].cityData[city].catNeuteringRate = neuteringRate;
-                }
-                
-                result.yearlyData[year].cityData[city].registrationUnits = Math.max(
-                    result.yearlyData[year].cityData[city].registrationUnits,
-                    registrationUnits
-                );
-            }
-            
-            // 更新縣市數據
-            result.cityData[city].totalRegistrations += registrations;
-            result.cityData[city].registrationUnits = Math.max(result.cityData[city].registrationUnits, registrationUnits);
-            
-            if (!result.cityData[city].yearlyData[year]) {
-                result.cityData[city].yearlyData[year] = {
-                    registrations: registrations,
-                    dogRegistrations: animalType === '狗' ? registrations : 0,
-                    catRegistrations: animalType === '貓' ? registrations : 0,
-                    neuteringRate: neuteringRate,
-                    dogNeuteringRate: animalType === '狗' ? neuteringRate : 0,
-                    catNeuteringRate: animalType === '貓' ? neuteringRate : 0
-                };
-            } else {
-                // 更新現有數據
-                result.cityData[city].yearlyData[year].registrations += registrations;
-                
-                if (animalType === '狗') {
-                    result.cityData[city].yearlyData[year].dogRegistrations += registrations;
-                    result.cityData[city].yearlyData[year].dogNeuteringRate = neuteringRate;
-                } else if (animalType === '貓') {
-                    result.cityData[city].yearlyData[year].catRegistrations += registrations;
-                    result.cityData[city].yearlyData[year].catNeuteringRate = neuteringRate;
-                }
-            }
-            
-            // 添加到表格數據
-            result.tableData.push({
-                city: city,
-                year: year,
-                animalType: animalType,
-                registrations: registrations,
-                neuteringCount: neuteringCount,
-                neuteringRate: neuteringRate,
-                registrationUnits: registrationUnits
-            });
-        }
-    });
-    
-    // 計算平均絕育率
-    calculateAverageRates(result);
-    
-    // 計算登記單位數（取最大值）
-    result.registrationUnits = Object.values(result.cityData).reduce(
-        (sum, cityData) => sum + cityData.registrationUnits, 0
-    );
-    
-    // 將Set轉換為陣列
-    result.years = Array.from(years).sort();
-    result.cities = Array.from(cities).sort();
-    
-    return result;
-}
+// 移除重複的processData函數，改用data-processor.js中的函數
 
 /**
  * 計算平均絕育率
@@ -395,7 +221,7 @@ function populateTable(data) {
         // 上一頁按鈕
         const prevItem = document.createElement('li');
         prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-        prevItem.innerHTML = '<a class=\"page-link\" href=\"#\">&laquo;</a>';
+        prevItem.innerHTML = '<a class="page-link" href="#">&laquo;</a>';
         prevItem.addEventListener('click', function(e) {
             e.preventDefault();
             if (currentPage > 1) {
@@ -417,7 +243,7 @@ function populateTable(data) {
         if (startPage > 1) {
             const firstItem = document.createElement('li');
             firstItem.className = 'page-item';
-            firstItem.innerHTML = '<a class=\"page-link\" href=\"#\">1</a>';
+            firstItem.innerHTML = '<a class="page-link" href="#">1</a>';
             firstItem.addEventListener('click', function(e) {
                 e.preventDefault();
                 renderTable(1);
@@ -428,7 +254,7 @@ function populateTable(data) {
             if (startPage > 2) {
                 const ellipsisItem = document.createElement('li');
                 ellipsisItem.className = 'page-item disabled';
-                ellipsisItem.innerHTML = '<a class=\"page-link\" href=\"#\">...</a>';
+                ellipsisItem.innerHTML = '<a class="page-link" href="#">...</a>';
                 pagination.appendChild(ellipsisItem);
             }
         }
@@ -437,7 +263,7 @@ function populateTable(data) {
         for (let i = startPage; i <= endPage; i++) {
             const pageItem = document.createElement('li');
             pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            pageItem.innerHTML = `<a class=\"page-link\" href=\"#\">${i}</a>`;
+            pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
             pageItem.addEventListener('click', function(e) {
                 e.preventDefault();
                 renderTable(i);
@@ -449,7 +275,7 @@ function populateTable(data) {
         if (endPage < totalPages - 1) {
             const ellipsisItem = document.createElement('li');
             ellipsisItem.className = 'page-item disabled';
-            ellipsisItem.innerHTML = '<a class=\"page-link\" href=\"#\">...</a>';
+            ellipsisItem.innerHTML = '<a class="page-link" href="#">...</a>';
             pagination.appendChild(ellipsisItem);
         }
         
@@ -457,7 +283,7 @@ function populateTable(data) {
         if (endPage < totalPages) {
             const lastItem = document.createElement('li');
             lastItem.className = 'page-item';
-            lastItem.innerHTML = `<a class=\"page-link\" href=\"#\">${totalPages}</a>`;
+            lastItem.innerHTML = `<a class="page-link" href="#">${totalPages}</a>`;
             lastItem.addEventListener('click', function(e) {
                 e.preventDefault();
                 renderTable(totalPages);
@@ -468,7 +294,7 @@ function populateTable(data) {
         // 下一頁按鈕
         const nextItem = document.createElement('li');
         nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-        nextItem.innerHTML = '<a class=\"page-link\" href=\"#\">&raquo;</a>';
+        nextItem.innerHTML = '<a class="page-link" href="#">&raquo;</a>';
         nextItem.addEventListener('click', function(e) {
             e.preventDefault();
             if (currentPage < totalPages) {
@@ -532,7 +358,7 @@ function initTableSearch() {
             // 沒有結果
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan=\"6\" class=\"text-center\">沒有找到符合 \"${query}\" 的結果</td>
+                    <td colspan="6" class="text-center">沒有找到符合 "${query}" 的結果</td>
                 </tr>
             `;
             
@@ -563,7 +389,7 @@ function initTableSearch() {
                 for (let i = 1; i <= totalPages; i++) {
                     const pageItem = document.createElement('li');
                     pageItem.className = `page-item ${i === 1 ? 'active' : ''}`;
-                    pageItem.innerHTML = `<a class=\"page-link\" href=\"#\">${i}</a>`;
+                    pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
                     pageItem.addEventListener('click', function(e) {
                         e.preventDefault();
                         
