@@ -208,13 +208,17 @@
     <!-- 載入爬蟲數據的JS文件 -->
     <script src="js/pet_registration_data.js"></script>
     
-    <!-- 載入模組化的JS文件 -->
+    <!-- 載入模組化的JS文件，順序很重要 -->
     <script src="js/utils.js"></script>
-    <script src="js/dashboard.js"></script>
+    <!-- 先載入實用工具函數 -->
     <script src="js/data-processor.js"></script>
+    <!-- 載入圖表初始化模組 - 在 main.js 之前載入 -->
     <script src="js/chart-initializer.js"></script>
+    <!-- 再載入功能模組 -->
     <script src="js/table.js"></script>
     <script src="js/filters.js"></script>
+    <script src="js/dashboard.js"></script>
+    <!-- 最後載入主程式 -->
     <script src="js/main.js"></script>
 </body>
 </html>
