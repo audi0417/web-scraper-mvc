@@ -26,8 +26,8 @@ function initDashboard() {
         // 更新數據卡片
         updateDataCards(processedData);
         
-        // 初始化圖表
-        initCharts(processedData);
+        // 初始化圖表 - 已移至 chart-initializer.js
+        // initCharts(processedData);
         
         // 填充數據表格
         populateTable(processedData);
@@ -209,241 +209,7 @@ function updateDataCards(data) {
     document.getElementById('last-updated').textContent = formatDate(lastUpdated);
 }
 
-/**
- * 初始化圖表
- * @param {Object} data - 處理後的數據
- */
-function initCharts(data) {
-    // 1. 寵物登記數量年度趨勢圖
-    initRegistrationTrendChart(data);
-    
-    // 2. 各縣市登記數量分佈圖
-    initCityDistributionChart(data);
-    
-    // 3. 各縣市絕育率比較圖
-    initNeuteringRateChart(data);
-}
-
-/**
- * 初始化寵物登記數量年度趨勢圖
- * @param {Object} data - 處理後的數據
- */
-function initRegistrationTrendChart(data) {
-    const ctx = document.getElementById('registration-trend-chart').getContext('2d');
-    
-    // 準備數據
-    const years = data.years;
-    const registrations = years.map(year => {
-        return data.yearlyData[year] ? data.yearlyData[year].totalRegistrations : 0;
-    });
-    
-    // 創建圖表
-    window.registrationTrendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: years,
-            datasets: [{
-                label: '寵物登記數量',
-                data: registrations,
-                backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                borderColor: 'rgba(52, 152, 219, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(52, 152, 219, 1)',
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + formatNumber(context.raw);
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: '年份'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: '登記數量'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return formatNumber(value);
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
- * 初始化各縣市登記數量分佈圖
- * @param {Object} data - 處理後的數據
- */
-function initCityDistributionChart(data) {
-    const ctx = document.getElementById('city-distribution-chart').getContext('2d');
-    
-    // 獲取前10大縣市（按登記數量）
-    const citiesData = Object.entries(data.cityData)
-        .map(([city, cityData]) => ({
-            city,
-            registrations: cityData.totalRegistrations
-        }))
-        .sort((a, b) => b.registrations - a.registrations)
-        .slice(0, 10);
-    
-    // 準備數據
-    const cities = citiesData.map(item => item.city);
-    const registrations = citiesData.map(item => item.registrations);
-    
-    // 顏色列表
-    const colors = [
-        'rgba(52, 152, 219, 0.8)',  // 藍色
-        'rgba(46, 204, 113, 0.8)',  // 綠色
-        'rgba(231, 76, 60, 0.8)',   // 紅色
-        'rgba(155, 89, 182, 0.8)',  // 紫色
-        'rgba(230, 126, 34, 0.8)',  // 橙色
-        'rgba(241, 196, 15, 0.8)',  // 黃色
-        'rgba(26, 188, 156, 0.8)',  // 青色
-        'rgba(149, 165, 166, 0.8)', // 灰色
-        'rgba(211, 84, 0, 0.8)',    // 深橙色
-        'rgba(41, 128, 185, 0.8)',  // 深藍色
-    ];
-    
-    // 創建圖表
-    window.cityDistributionChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: cities,
-            datasets: [{
-                data: registrations,
-                backgroundColor: colors,
-                borderColor: 'white',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        boxWidth: 15,
-                        padding: 15
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.formattedValue;
-                            const percentage = ((context.raw / citiesData.reduce((sum, item) => sum + item.registrations, 0)) * 100).toFixed(1);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
- * 初始化各縣市絕育率比較圖
- * @param {Object} data - 處理後的數據
- */
-function initNeuteringRateChart(data) {
-    const ctx = document.getElementById('neutering-rate-chart').getContext('2d');
-    
-    // 獲取前15大縣市（按絕育率）
-    const citiesData = Object.entries(data.cityData)
-        .map(([city, cityData]) => ({
-            city,
-            neuteringRate: cityData.avgNeuteringRate
-        }))
-        .filter(item => item.neuteringRate > 0) // 過濾掉沒有絕育率數據的縣市
-        .sort((a, b) => b.neuteringRate - a.neuteringRate)
-        .slice(0, 15);
-    
-    // 準備數據
-    const cities = citiesData.map(item => item.city);
-    const neuteringRates = citiesData.map(item => item.neuteringRate);
-    
-    // 創建圖表
-    window.neuteringRateChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: cities,
-            datasets: [{
-                label: '絕育率 (%)',
-                data: neuteringRates,
-                backgroundColor: 'rgba(46, 204, 113, 0.7)',
-                borderColor: 'rgba(46, 204, 113, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',  // 水平條形圖
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + context.formattedValue + '%';
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: '絕育率 (%)'
-                    },
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: '縣市'
-                    }
-                }
-            }
-        }
-    });
-}
+// 圖表初始化函數已移至 chart-initializer.js
 
 /**
  * 填充數據表格
@@ -724,10 +490,13 @@ function initChartTypeSelector() {
             // 獲取圖表類型
             const chartType = this.getAttribute('data-type');
             
+            // 從 chart-initializer.js 獲取圖表對象
+            const charts = getCharts();
+            
             // 更新圖表
-            if (window.registrationTrendChart) {
-                window.registrationTrendChart.config.type = chartType;
-                window.registrationTrendChart.update();
+            if (charts && charts.registrationTrend) {
+                charts.registrationTrend.config.type = chartType;
+                charts.registrationTrend.update();
             }
         });
     });
