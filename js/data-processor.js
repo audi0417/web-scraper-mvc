@@ -52,16 +52,14 @@ function processData(rawData) {
     
     // 處理每個數據項
     items.forEach(item => {
-        const data = item.extra_data || {};
-        
         // 獲取基本數據
-        const year = data.年份 || '';
-        const city = data.縣市 || '';
-        const animalType = data.動物類型 || '狗'; // 默認為狗
-        const registrations = parseInt(data['登記數(A)'] || 0, 10);
-        const neuteringCount = parseInt(data['絕育數(E)'] || 0, 10);
-        const neuteringRate = parseFloat(data['絕育率(E-F)/(A-B)'] || 0);
-        const registrationUnits = parseInt(data['登記單位數'] || 0, 10);
+        const year = item.年份 || '';
+        const city = item.縣市 || '';
+        const animalType = item.動物類型 || '狗'; // 默認為狗
+        const registrations = parseInt(item['登記數(A)'] || 0, 10);
+        const neuteringCount = parseInt(item['絕育數(E)'] || 0, 10);
+        const neuteringRate = parseFloat(item['絕育率(E-F)/(A-B)'] || 0);
+        const registrationUnits = parseInt(item['登記單位數'] || 0, 10);
         
         // 添加到集合
         if (year) years.add(year);
@@ -70,6 +68,11 @@ function processData(rawData) {
         
         // 更新總數據
         result.totalRegistrations += registrations;
+        
+        // 更新動物類型數據
+        if (animalType === '狗' || animalType === '貓') {
+            result.animalTypeData[animalType].totalRegistrations += registrations;
+        }
         
         // 初始化年份數據（如果不存在）
         if (year && !result.yearlyData[year]) {
@@ -117,9 +120,8 @@ function processData(rawData) {
             };
         }
         
-        // 初始化年份-縣市數據
-        if (year && city) {
-            // 更新年份數據
+        // 更新年份數據
+        if (year) {
             result.yearlyData[year].totalRegistrations += registrations;
             if (animalType === '狗') {
                 result.yearlyData[year].dogRegistrations += registrations;
@@ -127,7 +129,10 @@ function processData(rawData) {
                 result.yearlyData[year].catRegistrations += registrations;
             }
             result.yearlyData[year].citiesCount += 1;
+        }
             
+        // 初始化年份-縣市數據
+        if (year && city) {
             if (!result.yearlyData[year].cityData[city]) {
                 result.yearlyData[year].cityData[city] = {
                     registrations: 0,
@@ -185,8 +190,6 @@ function processData(rawData) {
             result.cityData[city].yearlyData[year].registrations += registrations;
             
             // 更新動物類型數據
-            result.animalTypeData[animalType].totalRegistrations += registrations;
-            
             if (result.animalTypeData[animalType].yearlyData[year]) {
                 result.animalTypeData[animalType].yearlyData[year].registrations += registrations;
                 
