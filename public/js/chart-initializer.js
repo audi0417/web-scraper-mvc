@@ -422,8 +422,9 @@ function updateCityDistributionByYear(year) {
   // 如果年份是'all'，直接使用原始數據；否則，根據年份過濾
   if (year !== 'all') {
       // 從處理後的數據中獲取指定年份的數據
+      // 使用全局變量window.processedData
       const filteredCitiesData = cities.map((city, index) => {
-          const yearData = processedData.yearlyData[year] && processedData.yearlyData[year].cityData[city];
+          const yearData = window.processedData.yearlyData[year] && window.processedData.yearlyData[year].cityData[city];
           if (yearData) {
               if (animalType === 'dog') {
                   return {
@@ -491,9 +492,10 @@ function updateNeuteringRateByYear(year) {
   // 如果年份是'all'，直接使用原始數據；否則，根據年份過濾
   if (year !== 'all') {
       // 從處理後的數據中獲取指定年份的所有縣市絕育率
-      const allCities = processedData.cities;
+      // 使用全局變量window.processedData
+      const allCities = window.processedData.cities;
       const filteredCitiesData = allCities.map(city => {
-          const yearData = processedData.yearlyData[year] && processedData.yearlyData[year].cityData[city];
+          const yearData = window.processedData.yearlyData[year] && window.processedData.yearlyData[year].cityData[city];
           if (yearData) {
               if (animalType === 'dog') {
                   return {
@@ -739,7 +741,7 @@ function updateTrendChartDataType(dataType) {
       
       // 更新Y軸標題
       charts.registrationTrend.options.scales.y.title.text = '絕育率 (%)';
-      
+    
       // 更新Y軸刻度，增加百分比符號
       charts.registrationTrend.options.scales.y.ticks.callback = function(value) {
           return value + '%';
@@ -798,7 +800,7 @@ function updateTrendChartByFilters(filters) {
         // 獲取該縣市的數據
         const cityData = [];
         years.forEach(year => {
-            const yearData = processedData.yearlyData[year];
+            const yearData = window.processedData.yearlyData[year];
             if (yearData && yearData.cityData[city]) {
                 if (filters.animalType === 'dog') {
                     cityData.push(yearData.cityData[city].dogRegistrations || 0);
@@ -839,5 +841,4 @@ function updateTrendChartByFilters(filters) {
 function getCharts() {
     return charts;
 }
-    
-
+      
