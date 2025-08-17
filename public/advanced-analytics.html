@@ -383,35 +383,63 @@
                                             <h6><i class="bi bi-tools"></i> 地理分析工具</h6>
                                         </div>
                                         <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-3">
+                                                    <label for="analysis-year-select" class="form-label">分析年份</label>
+                                                    <select class="form-select form-select-sm" id="analysis-year-select">
+                                                        <option value="2025">2025年</option>
+                                                        <option value="2024">2024年</option>
+                                                        <option value="2023">2023年</option>
+                                                        <option value="2022">2022年</option>
+                                                        <option value="2021">2021年</option>
+                                                        <option value="2020">2020年</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="analysis-metric-select" class="form-label">分析指標</label>
+                                                    <select class="form-select form-select-sm" id="analysis-metric-select">
+                                                        <option value="neuteringRate">絕育率</option>
+                                                        <option value="registrations">登記數量</option>
+                                                        <option value="neutering">絕育數量</option>
+                                                        <option value="units">登記單位數</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">快速分析</label>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <button class="btn btn-outline-primary btn-sm" onclick="analyzeHotspotsInline()">
+                                                            <i class="bi bi-fire"></i> 熱點檢測
+                                                        </button>
+                                                        <button class="btn btn-outline-info btn-sm" onclick="calculateSpatialAutocorrelationInline()">
+                                                            <i class="bi bi-diagram-3"></i> 空間自相關
+                                                        </button>
+                                                        <button class="btn btn-outline-success btn-sm" onclick="analyzeNeighborhoodInline()">
+                                                            <i class="bi bi-people"></i> 鄰近效應
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 分析結果顯示區域 -->
+                                            <div id="analysis-results-area" style="display: none;">
+                                                <hr>
+                                                <div id="analysis-results-content"></div>
+                                            </div>
+                                            
                                             <div class="row">
-                                                <div class="col-md-2">
-                                                    <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="analyzeHotspots()">
-                                                        <i class="bi bi-fire"></i> 熱點檢測
-                                                    </button>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <button class="btn btn-outline-info btn-sm w-100 mb-2" onclick="calculateSpatialAutocorrelation()">
-                                                        <i class="bi bi-diagram-3"></i> 空間自相關
-                                                    </button>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="analyzeNeighborhood()">
-                                                        <i class="bi bi-people"></i> 鄰近效應
-                                                    </button>
-                                                </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-4">
                                                     <button class="btn btn-outline-warning btn-sm w-100 mb-2" onclick="generateSpatialReport()">
-                                                        <i class="bi bi-file-earmark-text"></i> 空間報告
+                                                        <i class="bi bi-file-earmark-text"></i> 完整空間報告
                                                     </button>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-4">
                                                     <button class="btn btn-outline-secondary btn-sm w-100 mb-2" onclick="checkTaiwanMapStatus()">
-                                                        <i class="bi bi-gear"></i> 診斷地圖
+                                                        <i class="bi bi-gear"></i> 診斷地圖狀態
                                                     </button>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-4">
                                                     <button class="btn btn-outline-danger btn-sm w-100 mb-2" onclick="retryInitTaiwanMap()">
-                                                        <i class="bi bi-arrow-clockwise"></i> 重新載入
+                                                        <i class="bi bi-arrow-clockwise"></i> 重新載入地圖
                                                     </button>
                                                 </div>
                                             </div>
