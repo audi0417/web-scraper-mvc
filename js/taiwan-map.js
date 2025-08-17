@@ -56,6 +56,7 @@ class TaiwanInteractiveMap {
      */
     processMapData(rawData) {
         const yearlyData = {};
+        const uniqueCities = new Set();
         
         rawData.items.forEach(item => {
             const year = item.年份;
@@ -64,6 +65,8 @@ class TaiwanInteractiveMap {
             const neutering = parseInt(item['絕育數(E)']) || 0;
             const neuteringRate = parseFloat(item['絕育率(E-F)/(A-B)']) || 0;
             const units = parseInt(item['登記單位數']) || 0;
+            
+            uniqueCities.add(city);
             
             if (!yearlyData[year]) {
                 yearlyData[year] = {};
@@ -96,6 +99,10 @@ class TaiwanInteractiveMap {
                 }
             });
         });
+        
+        // 調試：顯示數據中的縣市名稱
+        console.log('數據中的縣市名稱:', Array.from(uniqueCities).sort());
+        console.log('2025年數據:', yearlyData[2025]);
         
         return yearlyData;
     }
@@ -312,7 +319,15 @@ class TaiwanInteractiveMap {
      * 為每個縣市添加互動功能
      */
     onEachFeature(feature, layer) {
-        const cityName = this.normalizeCityName(feature.properties.NAME_2010 || feature.properties.NAME || '');
+        // 調試：顯示GeoJSON中的縣市名稱
+        const originalName = feature.properties.NAME_2010 || feature.properties.NAME || feature.properties.COUNTYNAME || '';
+        console.log('GeoJSON縣市名稱:', originalName, '所有屬性:', feature.properties);
+        
+        const cityName = this.normalizeCityName(originalName);
+        
+        // 檢查數據映射
+        const data = this.getCityData(cityName, this.currentYear);
+        console.log(`縣市映射: ${originalName} -> ${cityName}, 數據:`, data);
         
         // 滑鼠懸停效果
         layer.on({
@@ -580,23 +595,82 @@ class TaiwanInteractiveMap {
      * 標準化縣市名稱
      */
     normalizeCityName(name) {
-        // 處理不同的縣市名稱格式
+        if (!name) return '';
+        
+        // 移除可能的前後空格
+        name = name.trim();
+        
+        // 完整的縣市名稱映射表
         const mapping = {
+            // 直轄市
             '臺北市': '臺北市',
             '台北市': '臺北市',
+            'Taipei City': '臺北市',
             '新北市': '新北市',
+            'New Taipei City': '新北市',
             '桃園縣': '桃園市',
             '桃園市': '桃園市',
+            'Taoyuan City': '桃園市',
             '臺中市': '臺中市',
             '台中市': '臺中市',
+            'Taichung City': '臺中市',
             '臺南市': '臺南市',
             '台南市': '臺南市',
+            'Tainan City': '臺南市',
             '高雄市': '高雄市',
+            'Kaohsiung City': '高雄市',
+            
+            // 省轄市
+            '基隆市': '基隆市',
+            'Keelung City': '基隆市',
+            '新竹市': '新竹市',
+            'Hsinchu City': '新竹市',
+            '嘉義市': '嘉義市',
+            'Chiayi City': '嘉義市',
+            
+            // 縣
+            '新竹縣': '新竹縣',
+            'Hsinchu County': '新竹縣',
+            '苗栗縣': '苗栗縣',
+            'Miaoli County': '苗栗縣',
+            '彰化縣': '彰化縣',
+            'Changhua County': '彰化縣',
+            '南投縣': '南投縣',
+            'Nantou County': '南投縣',
+            '雲林縣': '雲林縣',
+            'Yunlin County': '雲林縣',
+            '嘉義縣': '嘉義縣',
+            'Chiayi County': '嘉義縣',
+            '屏東縣': '屏東縣',
+            'Pingtung County': '屏東縣',
+            '宜蘭縣': '宜蘭縣',
+            'Yilan County': '宜蘭縣',
+            '花蓮縣': '花蓮縣',
+            'Hualien County': '花蓮縣',
             '臺東縣': '臺東縣',
-            '台東縣': '臺東縣'
+            '台東縣': '臺東縣',
+            'Taitung County': '臺東縣',
+            '澎湖縣': '澎湖縣',
+            'Penghu County': '澎湖縣',
+            '金門縣': '金門縣',
+            'Kinmen County': '金門縣',
+            '連江縣': '連江縣',
+            'Lienchiang County': '連江縣'
         };
         
-        return mapping[name] || name;
+        // 直接映射
+        if (mapping[name]) {
+            return mapping[name];
+        }
+        
+        // 嘗試簡化映射（移除空格、統一繁簡體）
+        const simplifiedName = name.replace(/\s+/g, '').replace('台', '臺');
+        if (mapping[simplifiedName]) {
+            return mapping[simplifiedName];
+        }
+        
+        console.warn('未知的縣市名稱:', name);
+        return name;
     }
 
     /**
@@ -604,19 +678,42 @@ class TaiwanInteractiveMap {
      */
     getCityData(cityName, year) {
         const yearData = this.currentData[year];
-        if (!yearData) return null;
+        if (!yearData) {
+            console.log(`年份 ${year} 無數據`);
+            return null;
+        }
+        
+        // 標準化縣市名稱
+        const normalizedName = this.normalizeCityName(cityName);
         
         // 嘗試直接匹配
+        if (yearData[normalizedName]) {
+            return yearData[normalizedName];
+        }
+        
+        // 嘗試原始名稱匹配
         if (yearData[cityName]) {
             return yearData[cityName];
         }
         
-        // 嘗試反向映射
-        const reversedName = Object.keys(this.cityMapping).find(key => this.cityMapping[key] === cityName);
-        if (reversedName && yearData[reversedName]) {
-            return yearData[reversedName];
+        // 嘗試模糊匹配（移除市、縣後綴）
+        const baseName = normalizedName.replace(/[市縣]$/, '');
+        for (const dataCity in yearData) {
+            if (dataCity.replace(/[市縣]$/, '') === baseName) {
+                console.log(`模糊匹配成功: ${cityName} -> ${dataCity}`);
+                return yearData[dataCity];
+            }
         }
         
+        // 嘗試包含關係匹配
+        for (const dataCity in yearData) {
+            if (dataCity.includes(baseName) || baseName.includes(dataCity.replace(/[市縣]$/, ''))) {
+                console.log(`包含匹配成功: ${cityName} -> ${dataCity}`);
+                return yearData[dataCity];
+            }
+        }
+        
+        console.log(`無法找到 ${cityName} (標準化: ${normalizedName}) 在 ${year} 年的數據`);
         return null;
     }
 
