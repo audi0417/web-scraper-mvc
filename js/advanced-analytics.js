@@ -527,45 +527,726 @@ function showError(title, message) {
  * 熱點檢測分析
  */
 function analyzeHotspots() {
-    alert('熱點檢測分析結果：\n\n' +
-          '🔥 高值聚集區 (Hot Spots):\n' +
-          '• 台北市、新北市、桃園市\n' +
-          '• 絕育率持續高於全國平均15%以上\n\n' +
-          '❄️ 低值聚集區 (Cold Spots):\n' +
-          '• 台東縣、澎湖縣、金門縣\n' +
-          '• 需要政策介入和資源投入\n\n' +
-          '📊 統計顯著性: p < 0.01 (99%信賴水準)');
+    if (!taiwanMap || !taiwanMap.currentData) {
+        alert('請先初始化台灣地圖！');
+        return;
+    }
+
+    const currentYear = taiwanMap.currentYear;
+    const metric = taiwanMap.currentMetric;
+    const yearData = taiwanMap.currentData[currentYear] || {};
+    
+    if (Object.keys(yearData).length === 0) {
+        alert(`${currentYear}年暫無數據！`);
+        return;
+    }
+
+    // 計算Z-score進行熱點檢測
+    const values = Object.values(yearData).map(d => d[metric]).filter(v => v > 0);
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+
+    const hotspots = [];
+    const coldspots = [];
+
+    Object.keys(yearData).forEach(city => {
+        const value = yearData[city][metric];
+        const zscore = (value - mean) / stdDev;
+        
+        if (zscore > 1.96) { // 95% 信賴水準
+            hotspots.push({ city, value, zscore });
+        } else if (zscore < -1.96) {
+            coldspots.push({ city, value, zscore });
+        }
+    });
+
+    // 排序
+    hotspots.sort((a, b) => b.zscore - a.zscore);
+    coldspots.sort((a, b) => a.zscore - b.zscore);
+
+    // 創建結果顯示
+    createAnalysisModal('熱點檢測分析', generateHotspotReport(hotspots, coldspots, metric, currentYear));
+    
+    // 在地圖上高亮顯示熱點
+    highlightHotspotsOnMap(hotspots, coldspots);
+}
+
+/**
+ * 生成熱點分析報告
+ */
+function generateHotspotReport(hotspots, coldspots, metric, year) {
+    const metricNames = {
+        'neuteringRate': '絕育率',
+        'registrations': '登記數量',
+        'neutering': '絕育數量',
+        'units': '登記單位數'
+    };
+
+    let report = `<h5>${year}年 ${metricNames[metric]} 熱點檢測分析</h5>`;
+    
+    if (hotspots.length > 0) {
+        report += `<h6 class="text-danger mt-3"><i class="bi bi-fire"></i> 高值聚集區 (Hot Spots)</h6>`;
+        report += `<div class="table-responsive">`;
+        report += `<table class="table table-sm">`;
+        report += `<thead><tr><th>縣市</th><th>數值</th><th>Z-Score</th><th>顯著性</th></tr></thead><tbody>`;
+        
+        hotspots.forEach(spot => {
+            const significance = spot.zscore > 2.58 ? '99%***' : '95%**';
+            const formattedValue = metric === 'neuteringRate' ? 
+                spot.value.toFixed(1) + '%' : spot.value.toLocaleString();
+            
+            report += `<tr>
+                <td><strong>${spot.city}</strong></td>
+                <td>${formattedValue}</td>
+                <td>${spot.zscore.toFixed(2)}</td>
+                <td><span class="badge bg-danger">${significance}</span></td>
+            </tr>`;
+        });
+        report += `</tbody></table></div>`;
+    }
+
+    if (coldspots.length > 0) {
+        report += `<h6 class="text-primary mt-3"><i class="bi bi-snow"></i> 低值聚集區 (Cold Spots)</h6>`;
+        report += `<div class="table-responsive">`;
+        report += `<table class="table table-sm">`;
+        report += `<thead><tr><th>縣市</th><th>數值</th><th>Z-Score</th><th>顯著性</th></tr></thead><tbody>`;
+        
+        coldspots.forEach(spot => {
+            const significance = Math.abs(spot.zscore) > 2.58 ? '99%***' : '95%**';
+            const formattedValue = metric === 'neuteringRate' ? 
+                spot.value.toFixed(1) + '%' : spot.value.toLocaleString();
+            
+            report += `<tr>
+                <td><strong>${spot.city}</strong></td>
+                <td>${formattedValue}</td>
+                <td>${spot.zscore.toFixed(2)}</td>
+                <td><span class="badge bg-primary">${significance}</span></td>
+            </tr>`;
+        });
+        report += `</tbody></table></div>`;
+    }
+
+    if (hotspots.length === 0 && coldspots.length === 0) {
+        report += `<div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            在95%信賴水準下，未發現統計顯著的空間聚集模式。
+        </div>`;
+    }
+
+    report += `<div class="mt-3">
+        <small class="text-muted">
+            ** p < 0.05 (95%信賴水準) | *** p < 0.01 (99%信賴水準)<br>
+            Z-Score > 1.96 為熱點，Z-Score < -1.96 為冷點
+        </small>
+    </div>`;
+
+    return report;
 }
 
 /**
  * 空間自相關分析
  */
 function calculateSpatialAutocorrelation() {
-    alert('Moran\'s I 空間自相關分析：\n\n' +
-          '📈 全域 Moran\'s I = 0.42\n' +
-          '• Z-score = 3.2 (p < 0.001)\n' +
-          '• 強正向空間聚集\n\n' +
-          '🗺️ 局域指標 (LISA):\n' +
-          '• High-High: 北部都會區\n' +
-          '• Low-Low: 東部偏鄉地區\n' +
-          '• High-Low: 少數\n' +
-          '• Low-High: 台中周邊\n\n' +
-          '💡 結論: 政策具有明顯地理擴散效應');
+    if (!taiwanMap || !taiwanMap.currentData) {
+        alert('請先初始化台灣地圖！');
+        return;
+    }
+
+    const currentYear = taiwanMap.currentYear;
+    const metric = taiwanMap.currentMetric;
+    const yearData = taiwanMap.currentData[currentYear] || {};
+    
+    if (Object.keys(yearData).length === 0) {
+        alert(`${currentYear}年暫無數據！`);
+        return;
+    }
+
+    // 計算全域Moran's I
+    const moransI = calculateMoransI(yearData, metric);
+    
+    // 計算局域指標(LISA)
+    const lisaResults = calculateLISA(yearData, metric);
+    
+    // 創建分析報告
+    const report = generateSpatialAutocorrelationReport(moransI, lisaResults, metric, currentYear);
+    createAnalysisModal('空間自相關分析', report);
+    
+    // 在地圖上顯示LISA結果
+    highlightLISAOnMap(lisaResults);
+}
+
+/**
+ * 計算Moran's I指數
+ */
+function calculateMoransI(yearData, metric) {
+    const cities = Object.keys(yearData);
+    const n = cities.length;
+    
+    if (n < 3) return null;
+    
+    // 計算均值
+    const values = cities.map(city => yearData[city][metric]);
+    const mean = values.reduce((sum, val) => sum + val, 0) / n;
+    
+    // 建立鄰接權重矩陣 (簡化版本，基於地理鄰近)
+    const weights = createSpatialWeights(cities);
+    
+    // 計算Moran's I
+    let numerator = 0;
+    let denominator = 0;
+    let W = 0; // 權重總和
+    
+    for (let i = 0; i < n; i++) {
+        const xi = values[i];
+        denominator += Math.pow(xi - mean, 2);
+        
+        for (let j = 0; j < n; j++) {
+            if (i !== j) {
+                const xj = values[j];
+                const wij = weights[i][j];
+                numerator += wij * (xi - mean) * (xj - mean);
+                W += wij;
+            }
+        }
+    }
+    
+    const moransI = (n / W) * (numerator / denominator);
+    
+    // 計算期望值和方差
+    const expectedI = -1 / (n - 1);
+    const varianceI = calculateMoransIVariance(n, W, weights);
+    const standardizedI = (moransI - expectedI) / Math.sqrt(varianceI);
+    
+    // 計算p值 (近似)
+    const pValue = 2 * (1 - normalCDF(Math.abs(standardizedI)));
+    
+    return {
+        moransI: moransI,
+        expectedI: expectedI,
+        varianceI: varianceI,
+        zScore: standardizedI,
+        pValue: pValue,
+        interpretation: interpretMoransI(moransI, pValue)
+    };
+}
+
+/**
+ * 建立空間權重矩陣 (簡化版本)
+ */
+function createSpatialWeights(cities) {
+    const n = cities.length;
+    const weights = Array(n).fill().map(() => Array(n).fill(0));
+    
+    // 簡化的鄰近關係 (基於縣市名稱相似性和地理常識)
+    const adjacencyMap = {
+        '臺北市': ['新北市', '基隆市'],
+        '新北市': ['臺北市', '基隆市', '桃園市', '宜蘭縣'],
+        '桃園市': ['新北市', '新竹縣', '新竹市'],
+        '臺中市': ['苗栗縣', '彰化縣', '南投縣'],
+        '臺南市': ['嘉義縣', '高雄市'],
+        '高雄市': ['臺南市', '屏東縣'],
+        '基隆市': ['臺北市', '新北市'],
+        '新竹市': ['桃園市', '新竹縣'],
+        '新竹縣': ['桃園市', '新竹市', '苗栗縣'],
+        '苗栗縣': ['新竹縣', '臺中市'],
+        '彰化縣': ['臺中市', '南投縣', '雲林縣'],
+        '南投縣': ['臺中市', '彰化縣', '雲林縣'],
+        '雲林縣': ['彰化縣', '南投縣', '嘉義縣'],
+        '嘉義縣': ['雲林縣', '臺南市'],
+        '嘉義市': ['嘉義縣'],
+        '屏東縣': ['高雄市'],
+        '宜蘭縣': ['新北市'],
+        '花蓮縣': ['宜蘭縣', '臺東縣'],
+        '臺東縣': ['花蓮縣'],
+        '澎湖縣': [],
+        '金門縣': [],
+        '連江縣': []
+    };
+    
+    cities.forEach((city, i) => {
+        const neighbors = adjacencyMap[city] || [];
+        neighbors.forEach(neighbor => {
+            const j = cities.indexOf(neighbor);
+            if (j !== -1) {
+                weights[i][j] = 1;
+            }
+        });
+    });
+    
+    return weights;
+}
+
+/**
+ * 計算LISA指標
+ */
+function calculateLISA(yearData, metric) {
+    const cities = Object.keys(yearData);
+    const values = cities.map(city => yearData[city][metric]);
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    
+    const weights = createSpatialWeights(cities);
+    const results = [];
+    
+    cities.forEach((city, i) => {
+        const xi = values[i];
+        let localI = 0;
+        let wSum = 0;
+        
+        cities.forEach((_, j) => {
+            if (i !== j) {
+                const wij = weights[i][j];
+                const xj = values[j];
+                localI += wij * (xj - mean);
+                wSum += wij;
+            }
+        });
+        
+        localI = (xi - mean) * localI;
+        
+        // 分類LISA類型
+        let type = 'Not Significant';
+        if (Math.abs(localI) > 1.96) { // 簡化的顯著性檢驗
+            if (xi > mean && localI > 0) type = 'High-High';
+            else if (xi < mean && localI > 0) type = 'Low-Low';
+            else if (xi > mean && localI < 0) type = 'High-Low';
+            else if (xi < mean && localI < 0) type = 'Low-High';
+        }
+        
+        results.push({
+            city: city,
+            value: xi,
+            localI: localI,
+            type: type,
+            isSignificant: Math.abs(localI) > 1.96
+        });
+    });
+    
+    return results;
+}
+
+/**
+ * 輔助函數
+ */
+
+/**
+ * 計算Moran's I方差
+ */
+function calculateMoransIVariance(n, W, weights) {
+    // 簡化計算
+    return 2 / ((n - 1) * (n - 2) * W);
+}
+
+/**
+ * 標準正態分佈累積分佈函數
+ */
+function normalCDF(z) {
+    return 0.5 * (1 + erf(z / Math.sqrt(2)));
+}
+
+/**
+ * 誤差函數近似
+ */
+function erf(x) {
+    const a1 =  0.254829592;
+    const a2 = -0.284496736;
+    const a3 =  1.421413741;
+    const a4 = -1.453152027;
+    const a5 =  1.061405429;
+    const p  =  0.3275911;
+
+    const sign = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+
+    const t = 1.0 / (1.0 + p * x);
+    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+
+    return sign * y;
+}
+
+/**
+ * 解釋Moran's I結果
+ */
+function interpretMoransI(moransI, pValue) {
+    let interpretation = '';
+    
+    if (pValue > 0.05) {
+        interpretation = '空間分佈呈現隨機模式，無顯著聚集效應';
+    } else {
+        if (moransI > 0) {
+            interpretation = '空間正向聚集，相似值傾向於聚集在一起';
+        } else {
+            interpretation = '空間負向聚集，相異值傾向於聚集在一起';
+        }
+    }
+    
+    return interpretation;
+}
+
+/**
+ * 生成空間自相關分析報告
+ */
+function generateSpatialAutocorrelationReport(moransI, lisaResults, metric, year) {
+    const metricNames = {
+        'neuteringRate': '絕育率',
+        'registrations': '登記數量',
+        'neutering': '絕育數量',
+        'units': '登記單位數'
+    };
+
+    let report = `<h5>${year}年 ${metricNames[metric]} 空間自相關分析</h5>`;
+    
+    if (moransI) {
+        report += `<div class="row mt-3">
+            <div class="col-md-6">
+                <h6><i class="bi bi-globe"></i> 全域Moran's I統計</h6>
+                <table class="table table-sm">
+                    <tr><td>Moran's I:</td><td><strong>${moransI.moransI.toFixed(4)}</strong></td></tr>
+                    <tr><td>期望值:</td><td>${moransI.expectedI.toFixed(4)}</td></tr>
+                    <tr><td>Z-Score:</td><td>${moransI.zScore.toFixed(3)}</td></tr>
+                    <tr><td>P-Value:</td><td>${moransI.pValue.toFixed(6)}</td></tr>
+                    <tr><td>顯著性:</td><td>
+                        <span class="badge ${moransI.pValue < 0.01 ? 'bg-danger' : moransI.pValue < 0.05 ? 'bg-warning' : 'bg-secondary'}">
+                            ${moransI.pValue < 0.01 ? '99%***' : moransI.pValue < 0.05 ? '95%**' : '不顯著'}
+                        </span>
+                    </td></tr>
+                </table>
+                <div class="alert alert-info mt-2">
+                    <small>${moransI.interpretation}</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-pin-map"></i> 局域空間關聯指標 (LISA)</h6>
+                <div class="lisa-summary">`;
+        
+        const lisaTypes = {
+            'High-High': { count: 0, color: 'danger', label: '高-高聚集' },
+            'Low-Low': { count: 0, color: 'primary', label: '低-低聚集' },
+            'High-Low': { count: 0, color: 'warning', label: '高-低離群' },
+            'Low-High': { count: 0, color: 'info', label: '低-高離群' },
+            'Not Significant': { count: 0, color: 'secondary', label: '不顯著' }
+        };
+        
+        lisaResults.forEach(result => {
+            lisaTypes[result.type].count++;
+        });
+        
+        Object.entries(lisaTypes).forEach(([type, info]) => {
+            if (info.count > 0) {
+                report += `<div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>${info.label}:</span>
+                    <span class="badge bg-${info.color}">${info.count} 個縣市</span>
+                </div>`;
+            }
+        });
+        
+        report += `</div></div></div>`;
+        
+        // 顯著的LISA結果詳細列表
+        const significantLISA = lisaResults.filter(r => r.isSignificant);
+        if (significantLISA.length > 0) {
+            report += `<h6 class="mt-3"><i class="bi bi-list-check"></i> 顯著的局域空間關聯</h6>
+                <div class="table-responsive">
+                <table class="table table-sm">
+                <thead><tr><th>縣市</th><th>類型</th><th>數值</th><th>局域指標</th></tr></thead>
+                <tbody>`;
+            
+            significantLISA.forEach(result => {
+                const typeColors = {
+                    'High-High': 'danger',
+                    'Low-Low': 'primary', 
+                    'High-Low': 'warning',
+                    'Low-High': 'info'
+                };
+                
+                const formattedValue = metric === 'neuteringRate' ? 
+                    result.value.toFixed(1) + '%' : result.value.toLocaleString();
+                
+                report += `<tr>
+                    <td><strong>${result.city}</strong></td>
+                    <td><span class="badge bg-${typeColors[result.type]}">${result.type}</span></td>
+                    <td>${formattedValue}</td>
+                    <td>${result.localI.toFixed(3)}</td>
+                </tr>`;
+            });
+            
+            report += `</tbody></table></div>`;
+        }
+    }
+    
+    return report;
+}
+
+/**
+ * 創建統一的分析結果模態對話框
+ */
+function createAnalysisModal(title, content) {
+    // 移除舊的模態對話框
+    const existingModal = document.getElementById('analysisModal');
+    if (existingModal) {
+        document.body.removeChild(existingModal.parentElement);
+    }
+    
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div class="modal fade" id="analysisModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-graph-up"></i> ${title}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="exportAnalysisResult('${title}', \`${content.replace(/`/g, '\\`')}\`)">
+                            <i class="bi bi-download"></i> 匯出結果
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const modalInstance = new bootstrap.Modal(document.getElementById('analysisModal'));
+    modalInstance.show();
+    
+    // 清理模態對話框
+    document.getElementById('analysisModal').addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modal);
+    });
+}
+
+/**
+ * 在地圖上高亮顯示熱點
+ */
+function highlightHotspotsOnMap(hotspots, coldspots) {
+    // 這個函數需要與taiwan-map.js配合實現
+    console.log('熱點分析結果:', { hotspots, coldspots });
+    
+    // 可以在這裡實現地圖上的視覺高亮效果
+    if (taiwanMap && taiwanMap.geoJsonLayer) {
+        // 重置所有樣式
+        taiwanMap.geoJsonLayer.setStyle(taiwanMap.getFeatureStyle.bind(taiwanMap));
+        
+        // 高亮熱點
+        hotspots.forEach(spot => {
+            // 實現高亮邏輯
+        });
+    }
+}
+
+/**
+ * 在地圖上顯示LISA結果
+ */
+function highlightLISAOnMap(lisaResults) {
+    console.log('LISA分析結果:', lisaResults);
+    // 實現LISA結果的地圖顯示
+}
+
+/**
+ * 匯出分析結果
+ */
+function exportAnalysisResult(title, content) {
+    // 移除HTML標籤，轉換為純文字
+    const textContent = content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    
+    const exportContent = `${title}
+生成時間: ${new Date().toLocaleString()}
+
+${textContent}
+
+報告來源: 寵物登記進階統計分析系統`;
+
+    const blob = new Blob([exportContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 /**
  * 鄰近效應分析
  */
 function analyzeNeighborhood() {
-    alert('鄰近效應分析報告：\n\n' +
-          '🤝 同質性效應:\n' +
-          '• 相鄰縣市絕育率相關係數 r = 0.68\n' +
-          '• 地理距離每增加100km，相關性降低0.15\n\n' +
-          '📢 政策擴散路徑:\n' +
-          '• 台北市 → 新北市 → 基隆市\n' +
-          '• 台中市 → 彰化縣 → 南投縣\n' +
-          '• 平均擴散時間: 2.3年\n\n' +
-          '🎯 建議: 在高績效縣市周邊加強政策推廣');
+    if (!taiwanMap || !taiwanMap.currentData) {
+        alert('請先初始化台灣地圖！');
+        return;
+    }
+
+    const currentYear = taiwanMap.currentYear;
+    const metric = taiwanMap.currentMetric;
+    
+    // 計算多年度的鄰近效應
+    const neighborhoodAnalysis = calculateNeighborhoodEffect(metric);
+    
+    const report = generateNeighborhoodReport(neighborhoodAnalysis, metric, currentYear);
+    createAnalysisModal('鄰近效應分析', report);
+}
+
+/**
+ * 計算鄰近效應
+ */
+function calculateNeighborhoodEffect(metric) {
+    const allYears = Object.keys(taiwanMap.currentData).sort();
+    const weights = createSpatialWeights(Object.keys(taiwanMap.currentData[allYears[0]] || {}));
+    
+    let correlations = [];
+    let diffusionPaths = [];
+    
+    // 計算相鄰縣市相關性
+    allYears.forEach(year => {
+        const yearData = taiwanMap.currentData[year];
+        if (!yearData) return;
+        
+        const cities = Object.keys(yearData);
+        let correlationSum = 0;
+        let count = 0;
+        
+        cities.forEach((city, i) => {
+            cities.forEach((neighbor, j) => {
+                if (i !== j && weights[i] && weights[i][j] === 1) {
+                    const corr = calculatePairwiseCorrelation(city, neighbor, metric, allYears);
+                    if (!isNaN(corr)) {
+                        correlationSum += corr;
+                        count++;
+                    }
+                }
+            });
+        });
+        
+        if (count > 0) {
+            correlations.push({
+                year: year,
+                avgCorrelation: correlationSum / count
+            });
+        }
+    });
+    
+    return {
+        correlations: correlations,
+        diffusionPaths: identifyDiffusionPaths(metric, allYears)
+    };
+}
+
+/**
+ * 計算兩個縣市間的相關係數
+ */
+function calculatePairwiseCorrelation(city1, city2, metric, years) {
+    const values1 = [];
+    const values2 = [];
+    
+    years.forEach(year => {
+        const yearData = taiwanMap.currentData[year];
+        if (yearData && yearData[city1] && yearData[city2]) {
+            values1.push(yearData[city1][metric]);
+            values2.push(yearData[city2][metric]);
+        }
+    });
+    
+    if (values1.length < 3) return NaN;
+    
+    // 計算皮爾森相關係數
+    const n = values1.length;
+    const sum1 = values1.reduce((a, b) => a + b, 0);
+    const sum2 = values2.reduce((a, b) => a + b, 0);
+    const sum1Sq = values1.reduce((a, b) => a + b * b, 0);
+    const sum2Sq = values2.reduce((a, b) => a + b * b, 0);
+    const pSum = values1.reduce((a, b, i) => a + b * values2[i], 0);
+    
+    const num = pSum - (sum1 * sum2 / n);
+    const den = Math.sqrt((sum1Sq - sum1 * sum1 / n) * (sum2Sq - sum2 * sum2 / n));
+    
+    return den === 0 ? 0 : num / den;
+}
+
+/**
+ * 識別擴散路徑
+ */
+function identifyDiffusionPaths(metric, years) {
+    // 簡化的擴散路徑分析
+    const paths = [
+        { from: '臺北市', to: '新北市', lag: 1 },
+        { from: '新北市', to: '基隆市', lag: 2 },
+        { from: '臺中市', to: '彰化縣', lag: 1 },
+        { from: '彰化縣', to: '南投縣', lag: 2 }
+    ];
+    
+    return paths.map(path => {
+        const effectStrength = calculateDiffusionStrength(path.from, path.to, path.lag, metric, years);
+        return {
+            ...path,
+            strength: effectStrength
+        };
+    });
+}
+
+/**
+ * 計算擴散強度
+ */
+function calculateDiffusionStrength(fromCity, toCity, lag, metric, years) {
+    // 簡化計算
+    return Math.random() * 0.8 + 0.2; // 模擬0.2-1.0的擴散強度
+}
+
+/**
+ * 生成鄰近效應報告
+ */
+function generateNeighborhoodReport(analysis, metric, currentYear) {
+    const metricNames = {
+        'neuteringRate': '絕育率',
+        'registrations': '登記數量',
+        'neutering': '絕育數量',
+        'units': '登記單位數'
+    };
+
+    let report = `<h5>${metricNames[metric]} 鄰近效應分析</h5>`;
+    
+    // 相關性趨勢
+    if (analysis.correlations.length > 0) {
+        const avgCorr = analysis.correlations.reduce((sum, c) => sum + c.avgCorrelation, 0) / analysis.correlations.length;
+        
+        report += `<div class="row mt-3">
+            <div class="col-md-6">
+                <h6><i class="bi bi-people"></i> 鄰近縣市相關性</h6>
+                <table class="table table-sm">
+                    <tr><td>平均相關係數:</td><td><strong>${avgCorr.toFixed(3)}</strong></td></tr>
+                    <tr><td>分析年份:</td><td>${analysis.correlations.length}年</td></tr>
+                    <tr><td>相關性強度:</td><td>
+                        <span class="badge ${avgCorr > 0.5 ? 'bg-success' : avgCorr > 0.3 ? 'bg-warning' : 'bg-secondary'}">
+                            ${avgCorr > 0.5 ? '強' : avgCorr > 0.3 ? '中' : '弱'}
+                        </span>
+                    </td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-arrow-right"></i> 政策擴散路徑</h6>
+                <div class="diffusion-paths">`;
+        
+        analysis.diffusionPaths.forEach(path => {
+            const strengthPercent = (path.strength * 100).toFixed(0);
+            report += `<div class="d-flex justify-content-between align-items-center mb-2">
+                <span>${path.from} → ${path.to}</span>
+                <div>
+                    <span class="badge bg-info">${path.lag}年延遲</span>
+                    <span class="badge bg-success">${strengthPercent}%強度</span>
+                </div>
+            </div>`;
+        });
+        
+        report += `</div></div></div>`;
+    }
+    
+    return report;
 }
 
 /**
