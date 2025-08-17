@@ -333,6 +333,12 @@
                             
                             <div id="taiwan-interactive-map">
                                 <!-- 台灣互動地圖將由JavaScript創建 -->
+                                <div class="text-center p-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">載入中...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">正在初始化台灣互動地圖...</p>
+                                </div>
                             </div>
                             
                             <div class="row mt-4">
@@ -378,24 +384,34 @@
                                         </div>
                                         <div class="card-body">
                                             <div class="row">
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="analyzeHotspots()">
                                                         <i class="bi bi-fire"></i> 熱點檢測
                                                     </button>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <button class="btn btn-outline-info btn-sm w-100 mb-2" onclick="calculateSpatialAutocorrelation()">
                                                         <i class="bi bi-diagram-3"></i> 空間自相關
                                                     </button>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="analyzeNeighborhood()">
                                                         <i class="bi bi-people"></i> 鄰近效應
                                                     </button>
                                                 </div>
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <button class="btn btn-outline-warning btn-sm w-100 mb-2" onclick="generateSpatialReport()">
                                                         <i class="bi bi-file-earmark-text"></i> 空間報告
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button class="btn btn-outline-secondary btn-sm w-100 mb-2" onclick="checkTaiwanMapStatus()">
+                                                        <i class="bi bi-gear"></i> 診斷地圖
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button class="btn btn-outline-danger btn-sm w-100 mb-2" onclick="retryInitTaiwanMap()">
+                                                        <i class="bi bi-arrow-clockwise"></i> 重新載入
                                                     </button>
                                                 </div>
                                             </div>

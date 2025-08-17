@@ -291,8 +291,74 @@ function initAnimatedMap() {
  * 初始化台灣互動地圖
  */
 function initTaiwanMap() {
-    taiwanMap = new TaiwanInteractiveMap('taiwan-interactive-map');
-    taiwanMap.initialize(petRegistrationData);
+    try {
+        console.log('開始初始化台灣互動地圖...');
+        
+        // 檢查必要的依賴
+        if (typeof L === 'undefined') {
+            console.error('Leaflet.js 未載入！');
+            return;
+        }
+        
+        if (typeof TaiwanInteractiveMap === 'undefined') {
+            console.error('TaiwanInteractiveMap 類別未定義！');
+            return;
+        }
+        
+        // 檢查容器元素是否存在
+        const container = document.getElementById('taiwan-interactive-map');
+        if (!container) {
+            console.error('找不到 taiwan-interactive-map 容器元素！');
+            return;
+        }
+        
+        // 初始化地圖
+        taiwanMap = new TaiwanInteractiveMap('taiwan-interactive-map');
+        taiwanMap.initialize(petRegistrationData).then(() => {
+            console.log('台灣互動地圖初始化完成');
+        }).catch(error => {
+            console.error('台灣地圖初始化失敗:', error);
+            
+            // 顯示錯誤訊息給用戶
+            container.innerHTML = `
+                <div class="alert alert-warning" role="alert">
+                    <h6><i class="bi bi-exclamation-triangle"></i> 地圖載入中遇到問題</h6>
+                    <p>正在嘗試載入台灣地圖資料，請稍候...</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="retryInitTaiwanMap()">
+                        <i class="bi bi-arrow-clockwise"></i> 重新載入
+                    </button>
+                </div>
+            `;
+        });
+        
+    } catch (error) {
+        console.error('台灣地圖初始化異常:', error);
+    }
+}
+
+/**
+ * 重新初始化台灣地圖
+ */
+function retryInitTaiwanMap() {
+    const container = document.getElementById('taiwan-interactive-map');
+    if (container) {
+        container.innerHTML = '<div class="text-center p-3">正在重新載入地圖...</div>';
+    }
+    
+    // 清理舊的地圖實例
+    if (taiwanMap) {
+        try {
+            taiwanMap.destroy();
+        } catch (e) {
+            console.warn('清理舊地圖實例時發生錯誤:', e);
+        }
+        taiwanMap = null;
+    }
+    
+    // 延遲一秒後重新初始化
+    setTimeout(() => {
+        initTaiwanMap();
+    }, 1000);
 }
 
 /**
@@ -524,11 +590,64 @@ function showError(title, message) {
  */
 
 /**
+ * 檢查台灣地圖初始化狀態
+ */
+function checkTaiwanMapStatus() {
+    const status = {
+        mapExists: !!taiwanMap,
+        hasData: !!(taiwanMap && taiwanMap.currentData),
+        leafletLoaded: typeof L !== 'undefined',
+        classExists: typeof TaiwanInteractiveMap !== 'undefined',
+        containerExists: !!document.getElementById('taiwan-interactive-map')
+    };
+    
+    console.log('台灣地圖狀態檢查:', status);
+    return status;
+}
+
+/**
+ * 診斷並修復台灣地圖問題
+ */
+function diagnoseTaiwanMap() {
+    const status = checkTaiwanMapStatus();
+    
+    if (!status.leafletLoaded) {
+        alert('Leaflet.js 未載入！請重新整理頁面。');
+        return false;
+    }
+    
+    if (!status.classExists) {
+        alert('TaiwanInteractiveMap 類別未定義！請檢查 taiwan-map.js 是否正確載入。');
+        return false;
+    }
+    
+    if (!status.containerExists) {
+        alert('找不到地圖容器元素！請確認您在地理演變分析頁籤中。');
+        return false;
+    }
+    
+    if (!status.mapExists) {
+        alert('台灣地圖未初始化！正在嘗試重新初始化...');
+        retryInitTaiwanMap();
+        return false;
+    }
+    
+    if (!status.hasData) {
+        alert('地圖數據未載入！正在嘗試重新載入數據...');
+        if (taiwanMap && typeof petRegistrationData !== 'undefined') {
+            taiwanMap.currentData = taiwanMap.processMapData(petRegistrationData);
+        }
+        return false;
+    }
+    
+    return true;
+}
+
+/**
  * 熱點檢測分析
  */
 function analyzeHotspots() {
-    if (!taiwanMap || !taiwanMap.currentData) {
-        alert('請先初始化台灣地圖！');
+    if (!diagnoseTaiwanMap()) {
         return;
     }
 
@@ -648,8 +767,7 @@ function generateHotspotReport(hotspots, coldspots, metric, year) {
  * 空間自相關分析
  */
 function calculateSpatialAutocorrelation() {
-    if (!taiwanMap || !taiwanMap.currentData) {
-        alert('請先初始化台灣地圖！');
+    if (!diagnoseTaiwanMap()) {
         return;
     }
 
@@ -1078,8 +1196,7 @@ ${textContent}
  * 鄰近效應分析
  */
 function analyzeNeighborhood() {
-    if (!taiwanMap || !taiwanMap.currentData) {
-        alert('請先初始化台灣地圖！');
+    if (!diagnoseTaiwanMap()) {
         return;
     }
 
