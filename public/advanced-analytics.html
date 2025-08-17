@@ -15,6 +15,10 @@
     <!-- D3.js for advanced visualizations -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
+    <!-- Leaflet.js for interactive maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <style>
         .analysis-section {
             background: white;
@@ -323,34 +327,79 @@
                         <!-- 地理演變分析 -->
                         <div class="tab-pane fade" id="map" role="tabpanel">
                             <div class="section-header">
-                                <h4><i class="bi bi-geo-alt"></i> 地理時空演變分析</h4>
-                                <p class="text-muted">動態展示各縣市寵物登記數據在時間軸上的演變，識別空間聚集模式</p>
+                                <h4><i class="bi bi-geo-alt"></i> 台灣縣市地理時空演變分析</h4>
+                                <p class="text-muted">互動式台灣地圖，動態展示各縣市寵物登記數據演變，支援滑鼠懸停和點擊查看詳細資訊</p>
                             </div>
                             
-                            <div id="animated-map-container">
-                                <!-- 動態地圖將由JavaScript創建 -->
+                            <div id="taiwan-interactive-map">
+                                <!-- 台灣互動地圖將由JavaScript創建 -->
                             </div>
                             
-                            <div class="row mt-3">
-                                <div class="col-md-4">
+                            <div class="row mt-4">
+                                <div class="col-md-3">
                                     <div class="insight-box">
                                         <h6><i class="bi bi-compass"></i> 空間自相關分析</h6>
-                                        <p>Moran's I = 0.42 (p < 0.05)<br>
-                                        顯示相鄰縣市具有相似的絕育率模式</p>
+                                        <p><strong>Moran's I = 0.42</strong> (p < 0.05)<br>
+                                        <small>相鄰縣市具有相似的絕育率模式，顯示地理聚集效應</small></p>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="insight-box">
                                         <h6><i class="bi bi-bullseye"></i> 熱點分析</h6>
-                                        <p>高絕育率聚集區：北部都會區<br>
-                                        改善潛力區：中南部偏鄉地區</p>
+                                        <p><strong>高績效聚集區</strong><br>
+                                        <small>北部都會區(台北、新北、桃園)<br>
+                                        絕育率持續領先全國平均</small></p>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <div class="insight-box">
+                                        <h6><i class="bi bi-graph-up"></i> 改善潛力區</h6>
+                                        <p><strong>成長空間大</strong><br>
+                                        <small>中南部偏鄉地區、東部縣市<br>
+                                        具有政策介入改善空間</small></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="alert-insight">
                                         <h6><i class="bi bi-arrow-up-right"></i> 擴散效應</h6>
-                                        <p>政策效果具有明顯的地理擴散特徵，<br>
-                                        平均擴散時間為2.3年</p>
+                                        <p><strong>政策傳播路徑</strong><br>
+                                        <small>政策效果從都會區向周邊擴散<br>
+                                        平均擴散時間為2.3年</small></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 地理分析工具 -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6><i class="bi bi-tools"></i> 地理分析工具</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="analyzeHotspots()">
+                                                        <i class="bi bi-fire"></i> 熱點檢測
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button class="btn btn-outline-info btn-sm w-100 mb-2" onclick="calculateSpatialAutocorrelation()">
+                                                        <i class="bi bi-diagram-3"></i> 空間自相關
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="analyzeNeighborhood()">
+                                                        <i class="bi bi-people"></i> 鄰近效應
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button class="btn btn-outline-warning btn-sm w-100 mb-2" onclick="generateSpatialReport()">
+                                                        <i class="bi bi-file-earmark-text"></i> 空間報告
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -368,8 +417,8 @@
                         <h3><i class="bi bi-file-earmark-bar-graph"></i> 統計分析報告摘要</h3>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
                             <h5>主要發現</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">
@@ -389,47 +438,6 @@
                                     地理聚集效應明顯，具有政策擴散潛力
                                 </li>
                             </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>管理建議</h5>
-                            <div class="accordion" id="recommendations">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#rec1">
-                                            短期建議 (1年內)
-                                        </button>
-                                    </h2>
-                                    <div id="rec1" class="accordion-collapse collapse" data-bs-parent="#recommendations">
-                                        <div class="accordion-body">
-                                            加強偏鄉地區的絕育宣導和補助，重點關注統計異常的縣市
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#rec2">
-                                            中期建議 (2-3年)
-                                        </button>
-                                    </h2>
-                                    <div id="rec2" class="accordion-collapse collapse" data-bs-parent="#recommendations">
-                                        <div class="accordion-body">
-                                            建立跨縣市合作機制，利用地理擴散效應提升政策效果
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#rec3">
-                                            長期建議 (3年以上)
-                                        </button>
-                                    </h2>
-                                    <div id="rec3" class="accordion-collapse collapse" data-bs-parent="#recommendations">
-                                        <div class="accordion-body">
-                                            建立預測預警系統，實現數據驅動的政策制定和評估
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -455,6 +463,7 @@
     <script src="js/utils.js"></script>
     <script src="js/data-processor.js"></script>
     <script src="js/advanced-charts.js"></script>
+    <script src="js/taiwan-map.js"></script>
     
     <!-- 主要分析腳本 -->
     <script src="js/advanced-analytics.js"></script>
