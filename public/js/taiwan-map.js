@@ -241,16 +241,43 @@ class TaiwanInteractiveMap {
     /**
      * 載入台灣 GeoJSON 資料
      */
-    async loadTaiwanGeoJSON() {
+    async loadTaiwanGeoJSON(retryCount = 0) {
+        const maxRetries = 3;
+        
         try {
-            // 使用線上的台灣縣市邊界 GeoJSON 資料
-            const response = await fetch('https://raw.githubusercontent.com/g0v/twgeojson/master/json/twCounty2010.geo.json');
+            console.log(`載入台灣GeoJSON資料... (嘗試 ${retryCount + 1}/${maxRetries + 1})`);
+            
+            // 更新進度提示
+            this.updateLoadingStatus('正在下載台灣縣市邊界資料...');
+            
+            // 使用線上的台灣縣市邊界 GeoJSON 資料，添加超時控制
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超時
+            
+            const response = await fetch('https://raw.githubusercontent.com/g0v/twgeojson/master/json/twCounty2010.geo.json', {
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error('無法載入台灣地圖資料');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
+            // 更新進度提示
+            this.updateLoadingStatus('正在解析地圖資料...');
+            
             const geoJsonData = await response.json();
+            
+            // 驗證GeoJSON資料
+            if (!geoJsonData || !geoJsonData.features || geoJsonData.features.length === 0) {
+                throw new Error('GeoJSON資料格式不正確');
+            }
+            
+            console.log(`成功載入 ${geoJsonData.features.length} 個縣市邊界`);
+            
+            // 更新進度提示
+            this.updateLoadingStatus('正在渲染地圖...');
             
             // 創建 GeoJSON 圖層
             this.geoJsonLayer = L.geoJSON(geoJsonData, {
@@ -261,11 +288,41 @@ class TaiwanInteractiveMap {
             // 調整地圖視野到台灣邊界
             this.map.fitBounds(this.geoJsonLayer.getBounds());
             
-        } catch (error) {
-            console.error('載入台灣地圖資料失敗:', error);
+            console.log('台灣地圖GeoJSON載入完成');
             
-            // 如果無法載入外部資料，使用簡化的台灣輪廓
-            this.loadFallbackMap();
+        } catch (error) {
+            console.error(`載入台灣地圖資料失敗 (嘗試 ${retryCount + 1}):`, error);
+            
+            if (retryCount < maxRetries) {
+                console.log(`${3}秒後重試載入GeoJSON...`);
+                this.updateLoadingStatus(`載入失敗，${3}秒後重試... (${retryCount + 1}/${maxRetries})`);
+                
+                setTimeout(() => {
+                    this.loadTaiwanGeoJSON(retryCount + 1);
+                }, 3000);
+            } else {
+                console.warn('多次嘗試後仍無法載入GeoJSON，使用備用地圖');
+                this.updateLoadingStatus('使用簡化地圖...');
+                
+                // 如果無法載入外部資料，使用簡化的台灣輪廓
+                this.loadFallbackMap();
+            }
+        }
+    }
+    
+    /**
+     * 更新載入狀態提示
+     */
+    updateLoadingStatus(message) {
+        const container = document.getElementById(this.containerId);
+        if (container) {
+            const existingContent = container.querySelector('.text-center');
+            if (existingContent) {
+                const messageElement = existingContent.querySelector('p');
+                if (messageElement) {
+                    messageElement.textContent = message;
+                }
+            }
         }
     }
 
