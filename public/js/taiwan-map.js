@@ -505,42 +505,29 @@ class TaiwanInteractiveMap {
         return this.colorScale(value);
     }
 
-    /**
-     * 計算全局數值範圍（所有年份的數據）
-     */
-    calculateGlobalRange(metric) {
-        let allValues = [];
-        
-        Object.keys(this.currentData).forEach(year => {
-            const yearData = this.currentData[year] || {};
-            const values = Object.values(yearData).map(d => d[metric]).filter(v => v > 0);
-            allValues = allValues.concat(values);
-        });
-        
-        if (allValues.length === 0) {
-            return { min: 0, max: 100 }; // 預設範圍
-        }
-        
-        const min = Math.min(...allValues);
-        const max = Math.max(...allValues);
-        
-        console.log(`${metric} 全局數值範圍: ${min} - ${max} (共${allValues.length}個數據點)`);
-        
-        return { min, max };
-    }
 
     /**
-     * 更新色彩比例尺 - 使用全局統一尺度
+     * 更新色彩比例尺 - 使用當前年份範圍但保持一致性
      */
     updateColorScale() {
         const scheme = document.getElementById('map-color-scheme')?.value || 'viridis';
         
-        // 計算當前指標的全局數值範圍
-        const globalRange = this.calculateGlobalRange(this.currentMetric);
-        const min = globalRange.min;
-        const max = globalRange.max;
+        // 使用當前年份的數據範圍，但確保非空
+        const yearData = this.currentData[this.currentYear] || {};
+        const values = Object.values(yearData).map(d => d[this.currentMetric]).filter(v => v > 0);
         
-        console.log(`更新統一色彩比例尺: 指標=${this.currentMetric}, 全局範圍=${min}-${max}`);
+        console.log(`更新色彩比例尺: 年份=${this.currentYear}, 指標=${this.currentMetric}, 數據點=${values.length}`);
+        
+        if (values.length === 0) {
+            this.colorScale = () => '#cccccc';
+            console.log('無有效數據，使用灰色');
+            return;
+        }
+        
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        
+        console.log(`當前年份數值範圍: ${min} - ${max}`);
         
         const colorSchemes = {
             'viridis': ['#440154', '#31688e', '#35b779', '#fde725'],
@@ -560,17 +547,18 @@ class TaiwanInteractiveMap {
                 return colors[Math.floor(colors.length / 2)];
             }
             
-            // 使用全局範圍計算顏色比例
+            // 使用當前年份範圍計算顏色比例
             const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
             const index = Math.min(Math.floor(ratio * (colors.length - 1)), colors.length - 2);
             const localRatio = (ratio * (colors.length - 1)) - index;
             
             const color = this.interpolateColor(colors[index], colors[index + 1], localRatio);
+            console.log(`數值 ${value} -> 比例 ${ratio.toFixed(2)} -> 顏色 ${color}`);
             return color;
         };
         
-        // 儲存全局範圍供其他方法使用
-        this.globalRange = { min, max };
+        // 儲存當前範圍
+        this.currentRange = { min, max };
         
         this.updateLegend(min, max, colors);
     }
@@ -617,7 +605,7 @@ class TaiwanInteractiveMap {
         
         const legendTitle = document.getElementById('legend-title');
         if (legendTitle) {
-            legendTitle.textContent = `${metricNames[this.currentMetric]}分佈圖例 (統一尺度)`;
+            legendTitle.textContent = `${metricNames[this.currentMetric]}分佈圖例`;
         }
         
         if (!container) return;
@@ -644,7 +632,7 @@ class TaiwanInteractiveMap {
                 <span>${formatValue(max)}</span>
             </div>
             <div class="legend-note" style="width: ${legendWidth}px; font-size: 0.65rem; color: #666; margin-top: 3px; text-align: center;">
-                <i class="bi bi-info-circle"></i> 全時期統一色彩尺度
+                <i class="bi bi-info-circle"></i> ${this.currentYear}年數據分佈
             </div>
         `;
     }
@@ -901,33 +889,6 @@ class TaiwanInteractiveMap {
         document.getElementById('highest-city').innerHTML = `${maxCity}<br><small>${formatValue(max)}</small>`;
         document.getElementById('lowest-city').innerHTML = `${minCity}<br><small>${formatValue(min)}</small>`;
         document.getElementById('std-deviation').textContent = formatValue(stdDev);
-        
-        // 添加與全局範圍的比較資訊
-        if (this.globalRange) {
-            const globalMin = this.globalRange.min;
-            const globalMax = this.globalRange.max;
-            const currentRange = max - min;
-            const globalRangeSize = globalMax - globalMin;
-            const rangeUtilization = ((currentRange / globalRangeSize) * 100).toFixed(1);
-            
-            // 在某個地方顯示這個資訊，比如在圖例下方
-            const legendContainer = document.getElementById('color-legend');
-            if (legendContainer && legendContainer.parentElement) {
-                const existingInfo = legendContainer.parentElement.querySelector('.year-range-info');
-                if (existingInfo) {
-                    existingInfo.remove();
-                }
-                
-                const rangeInfo = document.createElement('div');
-                rangeInfo.className = 'year-range-info';
-                rangeInfo.style.cssText = 'font-size: 0.7rem; color: #666; margin-top: 5px; text-align: center;';
-                rangeInfo.innerHTML = `
-                    <div>${year}年範圍: ${formatValue(min)} - ${formatValue(max)}</div>
-                    <div>覆蓋全局範圍的 ${rangeUtilization}%</div>
-                `;
-                legendContainer.parentElement.appendChild(rangeInfo);
-            }
-        }
     }
 
     /**
