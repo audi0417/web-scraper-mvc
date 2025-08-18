@@ -60,19 +60,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 處理數據
     currentData = processData(petRegistrationData);
     
-    // 初始化各種分析（但延遲台灣地圖初始化）
+    // 初始化各種分析（但不包括台灣地圖）
     initializeAnalyticsExceptMap();
     
     // 綁定事件監聽器
     bindEventListeners();
     
-    // 等待所有資源載入完成後再初始化台灣地圖
-    await waitForResourcesLoaded();
-    
-    // 延遲一點時間確保UI完全渲染
-    setTimeout(() => {
-        initTaiwanMap();
-    }, 1000);
+    // 不再自動初始化台灣地圖，改為點擊頁籤時載入
     
     console.log('進階分析儀表板初始化完成');
 });
@@ -481,10 +475,35 @@ function retryInitTaiwanMap() {
     }, 1000);
 }
 
+// 台灣地圖是否已初始化的標記
+let taiwanMapInitialized = false;
+
 /**
  * 綁定事件監聽器
  */
 function bindEventListeners() {
+    // 地理演變分析頁籤點擊事件
+    const mapTab = document.getElementById('map-tab');
+    if (mapTab) {
+        mapTab.addEventListener('click', function() {
+            console.log('用戶點擊地理演變分析頁籤');
+            
+            // 如果地圖尚未初始化，則開始初始化
+            if (!taiwanMapInitialized) {
+                console.log('開始初始化台灣地圖...');
+                taiwanMapInitialized = true; // 防止重複初始化
+                
+                // 等待頁籤切換動畫完成後初始化地圖
+                setTimeout(async () => {
+                    // 等待資源載入完成
+                    await waitForResourcesLoaded();
+                    // 初始化地圖
+                    initTaiwanMap();
+                }, 300); // 短暫延遲讓頁籤動畫完成
+            }
+        });
+    }
+    
     // 瀑布圖年份選擇
     document.getElementById('waterfall-year-select').addEventListener('change', function(e) {
         const year = parseInt(e.target.value);
