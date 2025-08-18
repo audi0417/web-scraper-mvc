@@ -12,9 +12,45 @@ let animatedMap = null;
 let taiwanMap = null;
 
 /**
+ * 等待所有資源載入完成
+ */
+function waitForResourcesLoaded() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 最多等待25秒
+        
+        const checkResources = () => {
+            attempts++;
+            
+            // 檢查關鍵資源是否已載入
+            const resourcesReady = 
+                typeof L !== 'undefined' &&
+                typeof TaiwanInteractiveMap !== 'undefined' &&
+                typeof petRegistrationData !== 'undefined' &&
+                petRegistrationData.items &&
+                document.getElementById('taiwan-interactive-map');
+            
+            if (resourcesReady) {
+                console.log(`所有資源已載入完成 (檢查了 ${attempts} 次)`);
+                resolve();
+            } else if (attempts >= maxAttempts) {
+                console.warn('等待資源載入超時，繼續初始化...');
+                resolve();
+            } else {
+                setTimeout(checkResources, 500);
+            }
+        };
+        
+        checkResources();
+    });
+}
+
+/**
  * 文檔載入完成後初始化
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM載入完成，開始檢查資源...');
+    
     // 檢查數據是否存在
     if (typeof petRegistrationData === 'undefined') {
         showError('數據載入失敗', '無法載入寵物登記數據，請確認爬蟲已正確執行。');
@@ -24,11 +60,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // 處理數據
     currentData = processData(petRegistrationData);
     
-    // 初始化各種分析
-    initializeAnalytics();
+    // 初始化各種分析（但延遲台灣地圖初始化）
+    initializeAnalyticsExceptMap();
     
     // 綁定事件監聽器
     bindEventListeners();
+    
+    // 等待所有資源載入完成後再初始化台灣地圖
+    await waitForResourcesLoaded();
+    
+    // 延遲一點時間確保UI完全渲染
+    setTimeout(() => {
+        initTaiwanMap();
+    }, 1000);
     
     console.log('進階分析儀表板初始化完成');
 });
@@ -54,6 +98,26 @@ function initializeAnalytics() {
     
     // 初始化台灣互動地圖
     initTaiwanMap();
+}
+
+/**
+ * 初始化除了台灣地圖以外的所有分析功能
+ */
+function initializeAnalyticsExceptMap() {
+    // 更新概覽統計
+    updateOverviewStats();
+    
+    // 初始化控制圖
+    initControlChart();
+    
+    // 初始化瀑布圖
+    initWaterfallChart();
+    
+    // 初始化甘特圖
+    initGanttChart();
+    
+    // 初始化動態地圖
+    initAnimatedMap();
 }
 
 /**
@@ -290,18 +354,28 @@ function initAnimatedMap() {
 /**
  * 初始化台灣互動地圖
  */
-function initTaiwanMap() {
+function initTaiwanMap(retryCount = 0) {
+    const maxRetries = 3;
+    
     try {
-        console.log('開始初始化台灣互動地圖...');
+        console.log(`開始初始化台灣互動地圖... (嘗試 ${retryCount + 1}/${maxRetries + 1})`);
         
         // 檢查必要的依賴
         if (typeof L === 'undefined') {
             console.error('Leaflet.js 未載入！');
+            if (retryCount < maxRetries) {
+                console.log('等待Leaflet.js載入，3秒後重試...');
+                setTimeout(() => initTaiwanMap(retryCount + 1), 3000);
+            }
             return;
         }
         
         if (typeof TaiwanInteractiveMap === 'undefined') {
             console.error('TaiwanInteractiveMap 類別未定義！');
+            if (retryCount < maxRetries) {
+                console.log('等待TaiwanInteractiveMap載入，2秒後重試...');
+                setTimeout(() => initTaiwanMap(retryCount + 1), 2000);
+            }
             return;
         }
         
@@ -309,30 +383,76 @@ function initTaiwanMap() {
         const container = document.getElementById('taiwan-interactive-map');
         if (!container) {
             console.error('找不到 taiwan-interactive-map 容器元素！');
+            if (retryCount < maxRetries) {
+                console.log('等待容器元素載入，1秒後重試...');
+                setTimeout(() => initTaiwanMap(retryCount + 1), 1000);
+            }
             return;
         }
         
+        // 檢查數據是否已載入
+        if (typeof petRegistrationData === 'undefined' || !petRegistrationData.items) {
+            console.error('寵物登記數據未載入！');
+            if (retryCount < maxRetries) {
+                console.log('等待數據載入，2秒後重試...');
+                setTimeout(() => initTaiwanMap(retryCount + 1), 2000);
+            }
+            return;
+        }
+        
+        // 更新載入狀態
+        container.innerHTML = `
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">載入中...</span>
+                </div>
+                <p class="mt-2 text-muted">正在載入台灣地圖數據...</p>
+                <small class="text-muted">首次載入可能需要較長時間</small>
+            </div>
+        `;
+        
         // 初始化地圖
         taiwanMap = new TaiwanInteractiveMap('taiwan-interactive-map');
+        
+        // 設置初始化超時
+        const initTimeout = setTimeout(() => {
+            console.warn('地圖初始化超時，嘗試重新初始化...');
+            retryInitTaiwanMap();
+        }, 15000); // 15秒超時
+        
         taiwanMap.initialize(petRegistrationData).then(() => {
+            clearTimeout(initTimeout);
             console.log('台灣互動地圖初始化完成');
         }).catch(error => {
+            clearTimeout(initTimeout);
             console.error('台灣地圖初始化失敗:', error);
             
-            // 顯示錯誤訊息給用戶
-            container.innerHTML = `
-                <div class="alert alert-warning" role="alert">
-                    <h6><i class="bi bi-exclamation-triangle"></i> 地圖載入中遇到問題</h6>
-                    <p>正在嘗試載入台灣地圖資料，請稍候...</p>
-                    <button class="btn btn-outline-primary btn-sm" onclick="retryInitTaiwanMap()">
-                        <i class="bi bi-arrow-clockwise"></i> 重新載入
-                    </button>
-                </div>
-            `;
+            if (retryCount < maxRetries) {
+                console.log(`初始化失敗，${3}秒後自動重試...`);
+                setTimeout(() => initTaiwanMap(retryCount + 1), 3000);
+            } else {
+                // 顯示錯誤訊息給用戶
+                container.innerHTML = `
+                    <div class="alert alert-warning" role="alert">
+                        <h6><i class="bi bi-exclamation-triangle"></i> 地圖載入失敗</h6>
+                        <p>無法載入台灣地圖資料，這可能是網絡問題導致的。</p>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="retryInitTaiwanMap()">
+                                <i class="bi bi-arrow-clockwise"></i> 重新載入
+                            </button>
+                            <small class="text-muted">或嘗試刷新頁面</small>
+                        </div>
+                    </div>
+                `;
+            }
         });
         
     } catch (error) {
         console.error('台灣地圖初始化異常:', error);
+        if (retryCount < maxRetries) {
+            console.log(`發生異常，${2}秒後重試...`);
+            setTimeout(() => initTaiwanMap(retryCount + 1), 2000);
+        }
     }
 }
 
