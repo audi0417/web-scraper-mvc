@@ -305,8 +305,16 @@ class TaiwanInteractiveMap {
         const data = this.getCityData(cityName, this.currentYear);
         const value = data ? data[this.currentMetric] : 0;
         
+        // 確保色彩比例尺已初始化
+        if (!this.colorScale) {
+            this.updateColorScale();
+        }
+        
+        const fillColor = this.getColor(value);
+        console.log(`初始樣式設定 - ${cityName}: 數值=${value}, 顏色=${fillColor}`);
+        
         return {
-            fillColor: this.getColor(value),
+            fillColor: fillColor,
             weight: 2,
             opacity: 1,
             color: '#666',
@@ -497,21 +505,29 @@ class TaiwanInteractiveMap {
         return this.colorScale(value);
     }
 
+
     /**
-     * 更新色彩比例尺
+     * 更新色彩比例尺 - 使用當前年份範圍但保持一致性
      */
     updateColorScale() {
-        const scheme = document.getElementById('map-color-scheme').value;
+        const scheme = document.getElementById('map-color-scheme')?.value || 'viridis';
+        
+        // 使用當前年份的數據範圍，但確保非空
         const yearData = this.currentData[this.currentYear] || {};
         const values = Object.values(yearData).map(d => d[this.currentMetric]).filter(v => v > 0);
         
+        console.log(`更新色彩比例尺: 年份=${this.currentYear}, 指標=${this.currentMetric}, 數據點=${values.length}`);
+        
         if (values.length === 0) {
             this.colorScale = () => '#cccccc';
+            console.log('無有效數據，使用灰色');
             return;
         }
         
         const min = Math.min(...values);
         const max = Math.max(...values);
+        
+        console.log(`當前年份數值範圍: ${min} - ${max}`);
         
         const colorSchemes = {
             'viridis': ['#440154', '#31688e', '#35b779', '#fde725'],
@@ -526,12 +542,23 @@ class TaiwanInteractiveMap {
         this.colorScale = (value) => {
             if (value === 0) return '#cccccc';
             
-            const ratio = (value - min) / (max - min);
+            // 處理單一數值的情況
+            if (min === max) {
+                return colors[Math.floor(colors.length / 2)];
+            }
+            
+            // 使用當前年份範圍計算顏色比例
+            const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
             const index = Math.min(Math.floor(ratio * (colors.length - 1)), colors.length - 2);
             const localRatio = (ratio * (colors.length - 1)) - index;
             
-            return this.interpolateColor(colors[index], colors[index + 1], localRatio);
+            const color = this.interpolateColor(colors[index], colors[index + 1], localRatio);
+            console.log(`數值 ${value} -> 比例 ${ratio.toFixed(2)} -> 顏色 ${color}`);
+            return color;
         };
+        
+        // 儲存當前範圍
+        this.currentRange = { min, max };
         
         this.updateLegend(min, max, colors);
     }
@@ -576,17 +603,36 @@ class TaiwanInteractiveMap {
             'units': '登記單位數'
         };
         
-        document.getElementById('legend-title').textContent = `${metricNames[this.currentMetric]}分佈圖例`;
+        const legendTitle = document.getElementById('legend-title');
+        if (legendTitle) {
+            legendTitle.textContent = `${metricNames[this.currentMetric]}分佈圖例`;
+        }
+        
+        if (!container) return;
         
         const legendWidth = 200;
         const legendHeight = 20;
         
+        // 格式化數值顯示
+        const formatValue = (value) => {
+            if (this.currentMetric === 'neuteringRate') {
+                return value.toFixed(1) + '%';
+            } else if (value >= 1000) {
+                return (value / 1000).toFixed(1) + 'K';
+            } else {
+                return Math.round(value).toString();
+            }
+        };
+        
         container.innerHTML = `
             <div class="legend-gradient" style="width: ${legendWidth}px; height: ${legendHeight}px; background: linear-gradient(to right, ${colors.join(', ')}); border: 1px solid #ccc; border-radius: 3px;"></div>
             <div class="legend-labels d-flex justify-content-between" style="width: ${legendWidth}px; font-size: 0.75rem; margin-top: 2px;">
-                <span>${min.toFixed(1)}</span>
-                <span>${((min + max) / 2).toFixed(1)}</span>
-                <span>${max.toFixed(1)}</span>
+                <span>${formatValue(min)}</span>
+                <span>${formatValue((min + max) / 2)}</span>
+                <span>${formatValue(max)}</span>
+            </div>
+            <div class="legend-note" style="width: ${legendWidth}px; font-size: 0.65rem; color: #666; margin-top: 3px; text-align: center;">
+                <i class="bi bi-info-circle"></i> ${this.currentYear}年數據分佈
             </div>
         `;
     }
@@ -734,11 +780,15 @@ class TaiwanInteractiveMap {
         // 指標選擇
         document.getElementById('map-metric-select').addEventListener('change', (e) => {
             this.currentMetric = e.target.value;
+            // 指標改變時重新計算全局範圍並更新地圖
+            this.colorScale = null; // 重置色彩比例尺
             this.updateMap(this.currentYear, this.currentMetric);
         });
 
         // 色彩配置
         document.getElementById('map-color-scheme').addEventListener('change', () => {
+            // 色彩配置改變時重新計算色彩比例尺
+            this.colorScale = null; // 重置色彩比例尺
             this.updateMap(this.currentYear, this.currentMetric);
         });
 
@@ -757,11 +807,54 @@ class TaiwanInteractiveMap {
      * 更新地圖
      */
     updateMap(year, metric) {
+        console.log(`更新地圖: 年份=${year}, 指標=${metric}`);
+        
+        // 更新當前年份和指標
+        this.currentYear = year;
+        this.currentMetric = metric;
+        
+        // 先更新色彩比例尺
+        this.updateColorScale();
+        
+        // 然後重新設置所有圖層的樣式
         if (this.geoJsonLayer) {
-            this.geoJsonLayer.setStyle(this.getFeatureStyle.bind(this));
+            console.log('重新設置圖層樣式...');
+            
+            // 對每個圖層重新應用樣式
+            this.geoJsonLayer.eachLayer((layer) => {
+                const feature = layer.feature;
+                const cityName = this.normalizeCityName(feature.properties.NAME_2010 || feature.properties.NAME || '');
+                const data = this.getCityData(cityName, year);
+                const value = data ? data[metric] : 0;
+                
+                // 為每個縣市計算獨立的顏色
+                const fillColor = this.getColor(value);
+                
+                const style = {
+                    fillColor: fillColor,
+                    weight: 2,
+                    opacity: 1,
+                    color: '#666',
+                    dashArray: '',
+                    fillOpacity: 0.7
+                };
+                
+                // 確保每個圖層都獲得正確的樣式
+                layer.setStyle(style);
+                
+                // 重要：強制重繪該圖層
+                if (layer._path) {
+                    layer._path.setAttribute('fill', fillColor);
+                }
+                
+                console.log(`${cityName}: 數值=${value}, 顏色=${fillColor}`);
+            });
+            
+            // 觸發地圖重繪
+            this.map.invalidateSize();
         }
         
-        this.updateColorScale();
+        // 更新統計資訊
         this.updateStatistics(year, metric);
     }
 

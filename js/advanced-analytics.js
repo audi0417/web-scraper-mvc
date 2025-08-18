@@ -692,6 +692,59 @@ function analyzeHotspots() {
 }
 
 /**
+ * 內嵌式熱點檢測分析 - 不使用彈出視窗
+ */
+function analyzeHotspotsInline() {
+    if (!diagnoseTaiwanMap()) {
+        return;
+    }
+
+    // 獲取用戶選擇的年份和指標
+    const selectedYear = parseInt(document.getElementById('analysis-year-select').value);
+    const selectedMetric = document.getElementById('analysis-metric-select').value;
+    
+    const yearData = taiwanMap.currentData[selectedYear] || {};
+    
+    if (Object.keys(yearData).length === 0) {
+        showInlineAnalysisResults('錯誤', `<div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> ${selectedYear}年暫無數據，請選擇其他年份
+        </div>`);
+        return;
+    }
+
+    // 計算Z-score進行熱點檢測
+    const values = Object.values(yearData).map(d => d[selectedMetric]).filter(v => v > 0);
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+
+    const hotspots = [];
+    const coldspots = [];
+
+    Object.keys(yearData).forEach(city => {
+        const value = yearData[city][selectedMetric];
+        const zscore = (value - mean) / stdDev;
+        
+        if (zscore > 1.96) { // 95% 信賴水準
+            hotspots.push({ city, value, zscore });
+        } else if (zscore < -1.96) {
+            coldspots.push({ city, value, zscore });
+        }
+    });
+
+    // 排序
+    hotspots.sort((a, b) => b.zscore - a.zscore);
+    coldspots.sort((a, b) => a.zscore - b.zscore);
+
+    // 在頁面內顯示結果
+    const report = generateHotspotReportInline(hotspots, coldspots, selectedMetric, selectedYear);
+    showInlineAnalysisResults('熱點檢測分析', report);
+    
+    // 在地圖上高亮顯示熱點
+    highlightHotspotsOnMap(hotspots, coldspots);
+}
+
+/**
  * 生成熱點分析報告
  */
 function generateHotspotReport(hotspots, coldspots, metric, year) {
@@ -1476,6 +1529,296 @@ function downloadSpatialReport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+/**
+ * 顯示內嵌分析結果
+ */
+function showInlineAnalysisResults(title, content) {
+    const resultsArea = document.getElementById('analysis-results-area');
+    const resultsContent = document.getElementById('analysis-results-content');
+    
+    resultsContent.innerHTML = `
+        <div class="analysis-inline-result">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6><i class="bi bi-graph-up"></i> ${title}</h6>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideInlineAnalysisResults()">
+                    <i class="bi bi-x"></i> 關閉
+                </button>
+            </div>
+            ${content}
+        </div>
+    `;
+    
+    resultsArea.style.display = 'block';
+    resultsArea.scrollIntoView({ behavior: 'smooth' });
+}
+
+/**
+ * 隱藏內嵌分析結果
+ */
+function hideInlineAnalysisResults() {
+    const resultsArea = document.getElementById('analysis-results-area');
+    resultsArea.style.display = 'none';
+}
+
+/**
+ * 生成內嵌式熱點分析報告
+ */
+function generateHotspotReportInline(hotspots, coldspots, metric, year) {
+    const metricNames = {
+        'neuteringRate': '絕育率',
+        'registrations': '登記數量',
+        'neutering': '絕育數量',
+        'units': '登記單位數'
+    };
+
+    let report = `<div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        <strong>${year}年 ${metricNames[metric]} 熱點檢測分析結果</strong>
+    </div>`;
+    
+    if (hotspots.length > 0) {
+        report += `<div class="row">
+            <div class="col-md-6">
+                <h6 class="text-danger"><i class="bi bi-fire"></i> 高值聚集區 (Hot Spots)</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead class="table-dark">
+                            <tr><th>縣市</th><th>數值</th><th>Z-Score</th><th>顯著性</th></tr>
+                        </thead>
+                        <tbody>`;
+        
+        hotspots.forEach(spot => {
+            const significance = spot.zscore > 2.58 ? '99%***' : '95%**';
+            const formattedValue = metric === 'neuteringRate' ? 
+                spot.value.toFixed(1) + '%' : spot.value.toLocaleString();
+            
+            report += `<tr>
+                <td><strong>${spot.city}</strong></td>
+                <td>${formattedValue}</td>
+                <td>${spot.zscore.toFixed(2)}</td>
+                <td><span class="badge bg-danger">${significance}</span></td>
+            </tr>`;
+        });
+        report += `</tbody></table></div>`;
+        
+        if (coldspots.length > 0) {
+            report += `</div><div class="col-md-6">`;
+        } else {
+            report += `</div></div>`;
+        }
+    }
+
+    if (coldspots.length > 0) {
+        if (hotspots.length === 0) {
+            report += `<div class="row"><div class="col-md-12">`;
+        }
+        
+        report += `<h6 class="text-primary"><i class="bi bi-snow"></i> 低值聚集區 (Cold Spots)</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead class="table-dark">
+                        <tr><th>縣市</th><th>數值</th><th>Z-Score</th><th>顯著性</th></tr>
+                    </thead>
+                    <tbody>`;
+        
+        coldspots.forEach(spot => {
+            const significance = Math.abs(spot.zscore) > 2.58 ? '99%***' : '95%**';
+            const formattedValue = metric === 'neuteringRate' ? 
+                spot.value.toFixed(1) + '%' : spot.value.toLocaleString();
+            
+            report += `<tr>
+                <td><strong>${spot.city}</strong></td>
+                <td>${formattedValue}</td>
+                <td>${spot.zscore.toFixed(2)}</td>
+                <td><span class="badge bg-primary">${significance}</span></td>
+            </tr>`;
+        });
+        report += `</tbody></table></div></div></div>`;
+    }
+
+    if (hotspots.length === 0 && coldspots.length === 0) {
+        report += `<div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> 
+            在95%信賴水準下，未發現統計顯著的空間聚集模式，各縣市表現相對均衡。
+        </div>`;
+    }
+
+    report += `<div class="mt-3">
+        <small class="text-muted">
+            <i class="bi bi-info-square"></i> 
+            ** p < 0.05 (95%信賴水準) | *** p < 0.01 (99%信賴水準)<br>
+            Z-Score > 1.96 為熱點，Z-Score < -1.96 為冷點
+        </small>
+    </div>`;
+
+    return report;
+}
+
+/**
+ * 內嵌式空間自相關分析
+ */
+function calculateSpatialAutocorrelationInline() {
+    if (!diagnoseTaiwanMap()) {
+        return;
+    }
+
+    const selectedYear = parseInt(document.getElementById('analysis-year-select').value);
+    const selectedMetric = document.getElementById('analysis-metric-select').value;
+    const yearData = taiwanMap.currentData[selectedYear] || {};
+    
+    if (Object.keys(yearData).length === 0) {
+        showInlineAnalysisResults('錯誤', `<div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> ${selectedYear}年暫無數據，請選擇其他年份
+        </div>`);
+        return;
+    }
+
+    // 計算全域Moran's I
+    const moransI = calculateMoransI(yearData, selectedMetric);
+    
+    // 計算局域指標(LISA)
+    const lisaResults = calculateLISA(yearData, selectedMetric);
+    
+    // 在頁面內顯示結果
+    const report = generateSpatialAutocorrelationReportInline(moransI, lisaResults, selectedMetric, selectedYear);
+    showInlineAnalysisResults('空間自相關分析', report);
+}
+
+/**
+ * 生成內嵌式空間自相關分析報告
+ */
+function generateSpatialAutocorrelationReportInline(moransI, lisaResults, metric, year) {
+    const metricNames = {
+        'neuteringRate': '絕育率',
+        'registrations': '登記數量',
+        'neutering': '絕育數量',
+        'units': '登記單位數'
+    };
+
+    let report = `<div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        <strong>${year}年 ${metricNames[metric]} 空間自相關分析結果</strong>
+    </div>`;
+    
+    if (moransI) {
+        report += `<div class="row">
+            <div class="col-md-6">
+                <h6><i class="bi bi-globe"></i> 全域Moran's I統計</h6>
+                <table class="table table-sm table-bordered">
+                    <tr><td><strong>Moran's I:</strong></td><td>${moransI.moransI.toFixed(4)}</td></tr>
+                    <tr><td><strong>期望值:</strong></td><td>${moransI.expectedI.toFixed(4)}</td></tr>
+                    <tr><td><strong>Z-Score:</strong></td><td>${moransI.zScore.toFixed(3)}</td></tr>
+                    <tr><td><strong>P-Value:</strong></td><td>${moransI.pValue.toFixed(6)}</td></tr>
+                    <tr><td><strong>顯著性:</strong></td><td>
+                        <span class="badge ${moransI.pValue < 0.01 ? 'bg-danger' : moransI.pValue < 0.05 ? 'bg-warning' : 'bg-secondary'}">
+                            ${moransI.pValue < 0.01 ? '99%***' : moransI.pValue < 0.05 ? '95%**' : '不顯著'}
+                        </span>
+                    </td></tr>
+                </table>
+                <div class="alert alert-light mt-2">
+                    <small><i class="bi bi-lightbulb"></i> ${moransI.interpretation}</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-pin-map"></i> 局域空間關聯指標 (LISA)</h6>`;
+        
+        const lisaTypes = {
+            'High-High': { count: 0, color: 'danger', label: '高-高聚集' },
+            'Low-Low': { count: 0, color: 'primary', label: '低-低聚集' },
+            'High-Low': { count: 0, color: 'warning', label: '高-低離群' },
+            'Low-High': { count: 0, color: 'info', label: '低-高離群' },
+            'Not Significant': { count: 0, color: 'secondary', label: '不顯著' }
+        };
+        
+        lisaResults.forEach(result => {
+            lisaTypes[result.type].count++;
+        });
+        
+        Object.entries(lisaTypes).forEach(([type, info]) => {
+            if (info.count > 0) {
+                report += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                    <span>${info.label}:</span>
+                    <span class="badge bg-${info.color}">${info.count} 個縣市</span>
+                </div>`;
+            }
+        });
+        
+        report += `</div></div>`;
+    }
+    
+    return report;
+}
+
+/**
+ * 內嵌式鄰近效應分析
+ */
+function analyzeNeighborhoodInline() {
+    if (!diagnoseTaiwanMap()) {
+        return;
+    }
+
+    const selectedMetric = document.getElementById('analysis-metric-select').value;
+    
+    // 計算多年度的鄰近效應
+    const neighborhoodAnalysis = calculateNeighborhoodEffect(selectedMetric);
+    
+    const report = generateNeighborhoodReportInline(neighborhoodAnalysis, selectedMetric);
+    showInlineAnalysisResults('鄰近效應分析', report);
+}
+
+/**
+ * 生成內嵌式鄰近效應報告
+ */
+function generateNeighborhoodReportInline(analysis, metric) {
+    const metricNames = {
+        'neuteringRate': '絕育率',
+        'registrations': '登記數量',
+        'neutering': '絕育數量',
+        'units': '登記單位數'
+    };
+
+    let report = `<div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        <strong>${metricNames[metric]} 鄰近效應分析結果</strong>
+    </div>`;
+    
+    // 相關性趨勢
+    if (analysis.correlations.length > 0) {
+        const avgCorr = analysis.correlations.reduce((sum, c) => sum + c.avgCorrelation, 0) / analysis.correlations.length;
+        
+        report += `<div class="row">
+            <div class="col-md-6">
+                <h6><i class="bi bi-people"></i> 鄰近縣市相關性</h6>
+                <table class="table table-sm table-bordered">
+                    <tr><td><strong>平均相關係數:</strong></td><td>${avgCorr.toFixed(3)}</td></tr>
+                    <tr><td><strong>分析年份:</strong></td><td>${analysis.correlations.length}年</td></tr>
+                    <tr><td><strong>相關性強度:</strong></td><td>
+                        <span class="badge ${avgCorr > 0.5 ? 'bg-success' : avgCorr > 0.3 ? 'bg-warning' : 'bg-secondary'}">
+                            ${avgCorr > 0.5 ? '強' : avgCorr > 0.3 ? '中' : '弱'}
+                        </span>
+                    </td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-arrow-right"></i> 政策擴散路徑</h6>`;
+        
+        analysis.diffusionPaths.forEach(path => {
+            const strengthPercent = (path.strength * 100).toFixed(0);
+            report += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <span><strong>${path.from}</strong> → <strong>${path.to}</strong></span>
+                <div>
+                    <span class="badge bg-info">${path.lag}年延遲</span>
+                    <span class="badge bg-success">${strengthPercent}%強度</span>
+                </div>
+            </div>`;
+        });
+        
+        report += `</div></div>`;
+    }
+    
+    return report;
 }
 
 /**
