@@ -301,7 +301,22 @@ class TaiwanInteractiveMap {
      * 設定 GeoJSON 圖層樣式
      */
     getFeatureStyle(feature) {
-        const cityName = this.normalizeCityName(feature.properties.NAME_2010 || feature.properties.NAME || '');
+        const props = feature.properties;
+        const originalName = props.NAME_2010 || props.NAME || props.COUNTYNAME || props.C_Name || props.name || '';
+        
+        if (!originalName || originalName.trim() === '') {
+            console.warn('getFeatureStyle: 無法獲取縣市名稱，使用預設樣式');
+            return {
+                fillColor: '#cccccc',
+                weight: 2,
+                opacity: 1,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.7
+            };
+        }
+        
+        const cityName = this.normalizeCityName(originalName);
         const data = this.getCityData(cityName, this.currentYear);
         const value = data ? data[this.currentMetric] : 0;
         
@@ -311,7 +326,7 @@ class TaiwanInteractiveMap {
         }
         
         const fillColor = this.getColor(value);
-        console.log(`初始樣式設定 - ${cityName}: 數值=${value}, 顏色=${fillColor}`);
+        console.log(`初始樣式設定 - ${originalName}(${cityName}): 數值=${value}, 顏色=${fillColor}`);
         
         return {
             fillColor: fillColor,
@@ -328,8 +343,15 @@ class TaiwanInteractiveMap {
      */
     onEachFeature(feature, layer) {
         // 調試：顯示GeoJSON中的縣市名稱
-        const originalName = feature.properties.NAME_2010 || feature.properties.NAME || feature.properties.COUNTYNAME || '';
-        console.log('GeoJSON縣市名稱:', originalName, '所有屬性:', feature.properties);
+        const props = feature.properties;
+        const originalName = props.NAME_2010 || props.NAME || props.COUNTYNAME || props.C_Name || props.name || '';
+        console.log('GeoJSON縣市名稱:', originalName, '所有屬性:', props);
+        
+        // 如果沒有獲取到名稱，跳過這個圖層
+        if (!originalName || originalName.trim() === '') {
+            console.warn('無法獲取縣市名稱，跳過此圖層');
+            return;
+        }
         
         const cityName = this.normalizeCityName(originalName);
         
@@ -729,33 +751,47 @@ class TaiwanInteractiveMap {
             return null;
         }
         
+        // 如果縣市名稱為空，直接返回null
+        if (!cityName || cityName.trim() === '') {
+            console.log(`縣市名稱為空，無法匹配數據`);
+            return null;
+        }
+        
         // 標準化縣市名稱
         const normalizedName = this.normalizeCityName(cityName);
         
         // 嘗試直接匹配
         if (yearData[normalizedName]) {
+            console.log(`直接匹配成功: ${cityName} -> ${normalizedName}`);
             return yearData[normalizedName];
         }
         
         // 嘗試原始名稱匹配
         if (yearData[cityName]) {
+            console.log(`原始名稱匹配成功: ${cityName}`);
             return yearData[cityName];
         }
         
         // 嘗試模糊匹配（移除市、縣後綴）
         const baseName = normalizedName.replace(/[市縣]$/, '');
-        for (const dataCity in yearData) {
-            if (dataCity.replace(/[市縣]$/, '') === baseName) {
-                console.log(`模糊匹配成功: ${cityName} -> ${dataCity}`);
-                return yearData[dataCity];
+        if (baseName.length > 0) {  // 確保baseName不為空
+            for (const dataCity in yearData) {
+                const dataBaseName = dataCity.replace(/[市縣]$/, '');
+                if (dataBaseName === baseName && dataBaseName.length > 0) {
+                    console.log(`模糊匹配成功: ${cityName} -> ${dataCity}`);
+                    return yearData[dataCity];
+                }
             }
         }
         
-        // 嘗試包含關係匹配
-        for (const dataCity in yearData) {
-            if (dataCity.includes(baseName) || baseName.includes(dataCity.replace(/[市縣]$/, ''))) {
-                console.log(`包含匹配成功: ${cityName} -> ${dataCity}`);
-                return yearData[dataCity];
+        // 嘗試包含關係匹配（加強條件檢查）
+        if (baseName.length > 1) {  // baseName至少要有2個字符才進行包含匹配
+            for (const dataCity in yearData) {
+                const dataBaseName = dataCity.replace(/[市縣]$/, '');
+                if ((dataCity.includes(baseName) || baseName.includes(dataBaseName)) && dataBaseName.length > 1) {
+                    console.log(`包含匹配成功: ${cityName} -> ${dataCity}`);
+                    return yearData[dataCity];
+                }
             }
         }
         
@@ -823,7 +859,15 @@ class TaiwanInteractiveMap {
             // 對每個圖層重新應用樣式
             this.geoJsonLayer.eachLayer((layer) => {
                 const feature = layer.feature;
-                const cityName = this.normalizeCityName(feature.properties.NAME_2010 || feature.properties.NAME || '');
+                const props = feature.properties;
+                const originalName = props.NAME_2010 || props.NAME || props.COUNTYNAME || props.C_Name || props.name || '';
+                
+                if (!originalName || originalName.trim() === '') {
+                    console.warn('updateMap: 圖層無縣市名稱，跳過');
+                    return;
+                }
+                
+                const cityName = this.normalizeCityName(originalName);
                 const data = this.getCityData(cityName, year);
                 const value = data ? data[metric] : 0;
                 
@@ -847,7 +891,7 @@ class TaiwanInteractiveMap {
                     layer._path.setAttribute('fill', fillColor);
                 }
                 
-                console.log(`${cityName}: 數值=${value}, 顏色=${fillColor}`);
+                console.log(`${originalName}(${cityName}): 數值=${value}, 顏色=${fillColor}`);
             });
             
             // 觸發地圖重繪
