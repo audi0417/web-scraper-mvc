@@ -1,13 +1,12 @@
 /**
  * 進階統計分析JavaScript文件
- * 整合控制圖、瀑布圖、甘特圖、動態地圖等功能
+ * 整合控制圖、瀑布圖、動態地圖等功能
  */
 
 // 全域變數
 let currentData = null;
 let controlChart = null;
 let waterfallChart = null;
-let ganttChart = null;
 let animatedMap = null;
 let taiwanMap = null;
 
@@ -84,8 +83,6 @@ function initializeAnalytics() {
     // 初始化瀑布圖
     initWaterfallChart();
     
-    // 初始化甘特圖
-    initGanttChart();
     
     // 初始化動態地圖
     initAnimatedMap();
@@ -107,8 +104,6 @@ function initializeAnalyticsExceptMap() {
     // 初始化瀑布圖
     initWaterfallChart();
     
-    // 初始化甘特圖
-    initGanttChart();
     
     // 初始化動態地圖
     initAnimatedMap();
@@ -268,74 +263,6 @@ function updateWaterfallInsights(changes) {
     document.getElementById('waterfall-insights').textContent = insights;
 }
 
-/**
- * 初始化甘特圖
- */
-function initGanttChart() {
-    ganttChart = new GanttChart('gantt-chart-canvas');
-    
-    // 準備政策時間軸數據
-    const policies = preparePolicyData();
-    ganttChart.createChart(policies, '寵物政策實施時間軸');
-    
-    // 更新政策洞察
-    updatePolicyInsights(policies);
-}
-
-/**
- * 準備政策數據
- */
-function preparePolicyData() {
-    return [
-        {
-            name: '動物保護法修正',
-            start: '2017-01-01',
-            end: '2017-12-31',
-            effect: '絕育率提升12.3%',
-            type: 'regulation'
-        },
-        {
-            name: '寵物登記系統數位化',
-            start: '2015-06-01',
-            end: '2016-12-31',
-            effect: '登記便利性提升',
-            type: 'infrastructure'
-        },
-        {
-            name: '絕育補助擴大',
-            start: '2018-03-01',
-            end: '2020-12-31',
-            effect: '絕育數量增加35%',
-            type: 'incentive'
-        },
-        {
-            name: '責任飼主宣導',
-            start: '2019-01-01',
-            end: '2021-06-30',
-            effect: '飼主意識提升',
-            type: 'education'
-        },
-        {
-            name: 'COVID-19應變措施',
-            start: '2020-03-01',
-            end: '2022-06-30',
-            effect: '服務調整',
-            type: 'regulation'
-        }
-    ];
-}
-
-/**
- * 更新政策洞察
- */
-function updatePolicyInsights(policies) {
-    const mostEffectivePolicy = policies.find(p => p.name === '動物保護法修正');
-    document.getElementById('most-effective-policy').textContent = 
-        `${mostEffectivePolicy.name}(${mostEffectivePolicy.start.substring(0,4)})：${mostEffectivePolicy.effect}`;
-    
-    document.getElementById('policy-recommendations').textContent = 
-        '建議在每年第1季度實施新政策，以充分利用全年數據收集週期進行效果評估。';
-}
 
 /**
  * 初始化動態地圖
@@ -537,18 +464,6 @@ function bindEventListeners() {
         waterfallChart.createChart(changes, `${year}年各縣市${getMetricName(metric)}變化貢獻`);
         updateWaterfallInsights(changes);
     });
-    
-    // 政策過濾器
-    document.getElementById('policy-filter').addEventListener('change', function(e) {
-        const filterType = e.target.value;
-        filterPoliciesAndUpdate(filterType);
-    });
-    
-    // 效果過濾器
-    document.getElementById('effect-filter').addEventListener('change', function(e) {
-        const effectType = e.target.value;
-        filterPoliciesByEffect(effectType);
-    });
 }
 
 /**
@@ -598,87 +513,7 @@ function getMetricName(metric) {
     return names[metric] || '未知指標';
 }
 
-/**
- * 根據政策類型過濾
- */
-function filterPoliciesAndUpdate(filterType) {
-    let policies = preparePolicyData();
-    
-    if (filterType !== 'all') {
-        policies = policies.filter(p => p.type === filterType);
-    }
-    
-    ganttChart.destroy();
-    ganttChart = new GanttChart('gantt-chart-canvas');
-    ganttChart.createChart(policies, `寵物政策實施時間軸 - ${getFilterTypeName(filterType)}`);
-}
 
-/**
- * 根據效果過濾政策
- */
-function filterPoliciesByEffect(effectType) {
-    let policies = preparePolicyData();
-    
-    if (effectType !== 'all') {
-        // 這裡可以根據效果類型進一步過濾
-        // 目前使用示例邏輯
-    }
-    
-    ganttChart.destroy();
-    ganttChart = new GanttChart('gantt-chart-canvas');
-    ganttChart.createChart(policies, `寵物政策實施時間軸 - ${getEffectTypeName(effectType)}`);
-}
-
-/**
- * 獲取過濾類型名稱
- */
-function getFilterTypeName(filterType) {
-    const names = {
-        'all': '全部政策',
-        'regulation': '法規政策',
-        'incentive': '獎勵措施',
-        'education': '教育宣導',
-        'infrastructure': '基礎設施'
-    };
-    return names[filterType] || '未知類型';
-}
-
-/**
- * 獲取效果類型名稱
- */
-function getEffectTypeName(effectType) {
-    const names = {
-        'all': '全部效果',
-        'positive': '正面效果',
-        'neutral': '中性效果',
-        'negative': '負面效果'
-    };
-    return names[effectType] || '未知效果';
-}
-
-/**
- * 分析政策前後比較
- */
-function analyzePrePostPolicy() {
-    // 實現政策前後效果比較分析
-    alert('政策前後比較分析功能：\n\n' +
-          '• 動物保護法修正前後絕育率比較\n' +
-          '• 統計顯著性檢驗 (t-test)\n' +
-          '• 效果持續性分析\n' +
-          '• 地區差異分析');
-}
-
-/**
- * 計算政策投資報酬率
- */
-function calculatePolicyROI() {
-    // 實現政策投資報酬率計算
-    alert('政策效益計算功能：\n\n' +
-          '• 政策實施成本分析\n' +
-          '• 社會效益量化\n' +
-          '• ROI計算與排名\n' +
-          '• 成本效益比較');
-}
 
 /**
  * 突出顯示主要貢獻者
@@ -711,7 +546,7 @@ function showRegionalAnalysis() {
     // 顯示區域分析結果
     alert('區域分析結果：\n\n' +
           '• 北部地區：+45.2% (都會化效應)\n' +
-          '• 中部地區：+35.8% (政策推動)\n' +
+          '• 中部地區：+35.8% (發展帶動)\n' +
           '• 南部地區：+28.7% (穩定成長)\n' +
           '• 東部/離島：-5.1% (需要關注)');
 }
@@ -1538,7 +1373,7 @@ function generateNeighborhoodReport(analysis, metric, currentYear) {
                 </table>
             </div>
             <div class="col-md-6">
-                <h6><i class="bi bi-arrow-right"></i> 政策擴散路徑</h6>
+                <h6><i class="bi bi-arrow-right"></i> 區域擴散路徑</h6>
                 <div class="diffusion-paths">`;
         
         analysis.diffusionPaths.forEach(path => {
@@ -1587,9 +1422,9 @@ function generateSpatialReport() {
 📈 時空演變特徵
 • 絕育率整體上升趨勢
 • 城鄉差距逐年縮小
-• 政策效果由都市向鄉村擴散
+• 改善效果由都市向鄉村擴散
 
-🎯 政策建議
+🎯 改善建議
 1. 加強偏鄉地區資源投入
 2. 利用地理擴散效應
 3. 建立跨縣市合作機制
@@ -1647,12 +1482,12 @@ function downloadSpatialReport() {
 1. 空間聚集顯著 (Moran's I = 0.42, p < 0.001)
 2. 北部都會區為高績效聚集區
 3. 東部偏鄉為改善潛力區
-4. 政策具有地理擴散效應
+4. 改善效果具有地理擴散特性
 
 === 詳細分析 ===
 [完整分析內容...]
 
-=== 政策建議 ===
+=== 改善建議 ===
 1. 加強資源投入偏鄉地區
 2. 建立跨縣市合作機制
 3. 利用地理擴散提升效果
@@ -1941,7 +1776,7 @@ function generateNeighborhoodReportInline(analysis, metric) {
                 </table>
             </div>
             <div class="col-md-6">
-                <h6><i class="bi bi-arrow-right"></i> 政策擴散路徑</h6>`;
+                <h6><i class="bi bi-arrow-right"></i> 區域擴散路徑</h6>`;
         
         analysis.diffusionPaths.forEach(path => {
             const strengthPercent = (path.strength * 100).toFixed(0);
@@ -1966,7 +1801,6 @@ function generateNeighborhoodReportInline(analysis, metric) {
 window.addEventListener('beforeunload', function() {
     if (controlChart) controlChart.destroy();
     if (waterfallChart) waterfallChart.destroy();
-    if (ganttChart) ganttChart.destroy();
     if (animatedMap) animatedMap.destroy();
     if (taiwanMap) taiwanMap.destroy();
 });

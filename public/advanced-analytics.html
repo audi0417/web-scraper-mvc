@@ -161,11 +161,6 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="gantt-tab" data-bs-toggle="pill" data-bs-target="#gantt" type="button" role="tab">
-                                <i class="bi bi-calendar-range"></i> 政策時間軸
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="map-tab" data-bs-toggle="pill" data-bs-target="#map" type="button" role="tab">
                                 <i class="bi bi-geo-alt"></i> 地理演變分析
                             </button>
@@ -264,65 +259,6 @@
                             </div>
                         </div>
 
-                        <!-- 政策時間軸 -->
-                        <div class="tab-pane fade" id="gantt" role="tabpanel">
-                            <div class="section-header">
-                                <h4><i class="bi bi-calendar-range"></i> 寵物政策實施時間軸與效果評估</h4>
-                                <p class="text-muted">追蹤重要政策實施時間，分析政策對寵物登記和絕育率的影響</p>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label for="policy-filter" class="form-label">政策類型過濾</label>
-                                    <select class="form-select" id="policy-filter">
-                                        <option value="all">全部政策</option>
-                                        <option value="regulation">法規政策</option>
-                                        <option value="incentive">獎勵措施</option>
-                                        <option value="education">教育宣導</option>
-                                        <option value="infrastructure">基礎設施</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="effect-filter" class="form-label">效果評估</label>
-                                    <select class="form-select" id="effect-filter">
-                                        <option value="all">全部效果</option>
-                                        <option value="positive">正面效果</option>
-                                        <option value="neutral">中性效果</option>
-                                        <option value="negative">負面效果</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">分析工具</label>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-outline-primary btn-sm" onclick="analyzePrePostPolicy()">
-                                            <i class="bi bi-graph-up"></i> 前後比較
-                                        </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="calculatePolicyROI()">
-                                            <i class="bi bi-calculator"></i> 效益計算
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="chart-container">
-                                <canvas id="gantt-chart-canvas"></canvas>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="insight-box">
-                                        <h6><i class="bi bi-award"></i> 最有效政策</h6>
-                                        <p id="most-effective-policy">《動物保護法》修正案(2017)：實施後絕育率平均提升12.3%</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="alert-insight">
-                                        <h6><i class="bi bi-clock-history"></i> 政策實施建議</h6>
-                                        <p id="policy-recommendations">建議在每年第1季度實施新政策，以充分利用全年數據收集週期</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- 地理演變分析 -->
                         <div class="tab-pane fade" id="map" role="tabpanel">

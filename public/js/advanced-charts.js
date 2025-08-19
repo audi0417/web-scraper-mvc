@@ -1,6 +1,6 @@
 /**
  * 進階統計圖表模組
- * 包含控制圖、瀑布圖、甘特圖、動態地圖等專業數據分析視覺化
+ * 包含控制圖、瀑布圖、動態地圖等專業數據分析視覺化
  */
 
 /**
@@ -370,158 +370,6 @@ class WaterfallChart {
     }
 }
 
-/**
- * 甘特圖 (Gantt Chart) - 政策實施時間軸與效果追蹤
- */
-class GanttChart {
-    constructor(containerId) {
-        this.containerId = containerId;
-        this.chart = null;
-    }
-
-    /**
-     * 準備甘特圖數據
-     * @param {Array} policies - 政策數據 [{name, start, end, effect, type}]
-     * @returns {Object} 甘特圖數據結構
-     */
-    prepareGanttData(policies) {
-        const sortedPolicies = policies.sort((a, b) => new Date(a.start) - new Date(b.start));
-        
-        return sortedPolicies.map((policy, index) => {
-            const startDate = new Date(policy.start);
-            const endDate = new Date(policy.end);
-            const duration = endDate - startDate;
-            
-            return {
-                label: policy.name,
-                data: [{
-                    x: [startDate, endDate],
-                    y: index,
-                    effect: policy.effect,
-                    type: policy.type
-                }]
-            };
-        });
-    }
-
-    /**
-     * 創建甘特圖
-     * @param {Array} policies - 政策時間軸數據
-     * @param {String} title - 圖表標題
-     */
-    createChart(policies, title = '政策實施時間軸與效果追蹤') {
-        const ganttData = this.prepareGanttData(policies);
-        const labels = ganttData.map(d => d.label);
-        
-        // 使用散點圖模擬甘特圖
-        const datasets = ganttData.map((policy, index) => {
-            const colorMap = {
-                'regulation': 'rgba(255, 99, 132, 0.7)',
-                'incentive': 'rgba(75, 192, 192, 0.7)',
-                'education': 'rgba(255, 205, 86, 0.7)',
-                'infrastructure': 'rgba(54, 162, 235, 0.7)'
-            };
-            
-            return {
-                label: policy.label,
-                data: policy.data.map(d => ({
-                    x: d.x[0].getTime(),
-                    y: index,
-                    width: d.x[1].getTime() - d.x[0].getTime(),
-                    effect: d.effect,
-                    type: d.type
-                })),
-                backgroundColor: colorMap[policy.data[0].type] || 'rgba(153, 102, 255, 0.7)',
-                borderColor: colorMap[policy.data[0].type] || 'rgba(153, 102, 255, 1)',
-                pointRadius: 8,
-                pointHoverRadius: 10
-            };
-        });
-        
-        const ctx = document.getElementById(this.containerId).getContext('2d');
-        
-        this.chart = new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: title
-                    },
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            usePointStyle: true
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: function(context) {
-                                const dataIndex = context[0].dataIndex;
-                                const datasetIndex = context[0].datasetIndex;
-                                return datasets[datasetIndex].label;
-                            },
-                            label: function(context) {
-                                const data = context.parsed;
-                                const dataset = datasets[context.datasetIndex];
-                                const policyData = dataset.data[context.dataIndex];
-                                const startDate = new Date(data.x).toLocaleDateString();
-                                const endDate = new Date(data.x + policyData.width).toLocaleDateString();
-                                
-                                return [
-                                    `實施期間: ${startDate} - ${endDate}`,
-                                    `政策類型: ${policyData.type}`,
-                                    `預期效果: ${policyData.effect}`
-                                ];
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'year',
-                            displayFormats: {
-                                year: 'YYYY'
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '時間'
-                        }
-                    },
-                    y: {
-                        type: 'linear',
-                        position: 'left',
-                        min: -0.5,
-                        max: policies.length - 0.5,
-                        ticks: {
-                            stepSize: 1,
-                            callback: function(value) {
-                                return value >= 0 && value < labels.length ? labels[value] : '';
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '政策項目'
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    destroy() {
-        if (this.chart) {
-            this.chart.destroy();
-        }
-    }
-}
 
 /**
  * 動態地圖 (Animated Map) - 時間軸上的地理數據演變
@@ -920,5 +768,4 @@ class AnimatedMap {
 // 導出類別供外部使用
 window.ControlChart = ControlChart;
 window.WaterfallChart = WaterfallChart;
-window.GanttChart = GanttChart;
 window.AnimatedMap = AnimatedMap;
